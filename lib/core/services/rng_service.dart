@@ -99,7 +99,7 @@ class RngService {
 
   /// Check if rarity counts as "rare+" for pity reset purposes
   bool isRarePlus(String rarityKey) {
-    const rarePlus = {'rare', 'epic', 'legendary', 'mythic', 'divine', 'secret'};
+    const rarePlus = {'rare', 'epic', 'legendary', 'mythic', 'divine', 'secret', 'cosmic'};
     return rarePlus.contains(rarityKey);
   }
 

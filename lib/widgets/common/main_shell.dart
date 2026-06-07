@@ -9,14 +9,15 @@ class MainShell extends ConsumerWidget {
   const MainShell({super.key, required this.child});
 
   static const _tabs = [
-    _TabItem(icon: '🏠', label: 'Home', path: '/'),
-    _TabItem(icon: '📦', label: 'Inventory', path: '/inventory'),
-    _TabItem(icon: '🛒', label: 'Shop', path: '/shop'),
-    _TabItem(icon: '⬆️', label: 'Upgrades', path: '/upgrades'),
-    _TabItem(icon: '📋', label: 'Missions', path: '/missions'),
-    _TabItem(icon: '📚', label: 'Collection', path: '/collection'),
-    _TabItem(icon: '🏆', label: 'Ranking', path: '/leaderboard'),
-    _TabItem(icon: '👤', label: 'Profile', path: '/profile'),
+    _TabItem(icon: Icons.home_rounded,          label: 'Home',       path: '/',            color: Color(0xFF39FF14)),
+    _TabItem(icon: Icons.inventory_2_rounded,    label: 'Inventario', path: '/inventory',   color: Color(0xFF00F5FF)),
+    _TabItem(icon: Icons.storefront_rounded,     label: 'Shop',       path: '/shop',        color: Color(0xFFFFD700)),
+    _TabItem(icon: Icons.rocket_launch_rounded,  label: 'Upgrade',    path: '/upgrades',    color: Color(0xFFFF6B00)),
+    _TabItem(icon: Icons.task_alt_rounded,       label: 'Missioni',   path: '/missions',    color: Color(0xFFA855F7)),
+    _TabItem(icon: Icons.swap_horiz_rounded,     label: 'Trade',      path: '/trade',       color: Color(0xFFFFD700)),
+    _TabItem(icon: Icons.shield_rounded,         label: 'Clan',       path: '/clan',        color: Color(0xFFFF0080)),
+    _TabItem(icon: Icons.leaderboard_rounded,    label: 'Ranking',    path: '/leaderboard', color: Color(0xFF00F5FF)),
+    _TabItem(icon: Icons.person_rounded,         label: 'Profilo',    path: '/profile',     color: Color(0xFFA855F7)),
   ];
 
   int _currentIndex(String location) {
@@ -39,61 +40,89 @@ class MainShell extends ConsumerWidget {
           Expanded(child: child),
         ],
       ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.navBackground,
-          border: Border(top: BorderSide(color: AppColors.border, width: 1)),
+      bottomNavigationBar: _GameBottomNav(
+        tabs: _tabs,
+        currentIndex: currentIndex,
+        onTap: (i) => context.go(_tabs[i].path),
+      ),
+    );
+  }
+}
+
+class _GameBottomNav extends StatelessWidget {
+  final List<_TabItem> tabs;
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+  const _GameBottomNav({required this.tabs, required this.currentIndex, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter, end: Alignment.bottomCenter,
+          colors: [Color(0xFF080C18), Color(0xFF050810)],
         ),
-        child: SafeArea(
-          top: false,
-          child: SizedBox(
-            height: 60,
-            child: Row(
-              children: List.generate(_tabs.length, (i) {
-                final tab = _tabs[i];
-                final isActive = i == currentIndex;
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () => context.go(tab.path),
-                    behavior: HitTestBehavior.opaque,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          top: BorderSide(
-                            color: isActive ? AppColors.neonCyan : Colors.transparent,
-                            width: 2,
+        border: const Border(top: BorderSide(color: Color(0xFF1E2A40), width: 1)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.7), blurRadius: 20, offset: const Offset(0, -4))],
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 60,
+          child: Row(
+            children: List.generate(tabs.length, (i) {
+              final tab = tabs[i];
+              final isActive = i == currentIndex;
+              final color = tab.color;
+
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => onTap(i),
+                  behavior: HitTestBehavior.opaque,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    decoration: BoxDecoration(
+                      border: isActive
+                          ? Border(top: BorderSide(color: color, width: 2.5))
+                          : null,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: isActive ? 38 : 34,
+                          height: isActive ? 30 : 26,
+                          decoration: BoxDecoration(
+                            color: isActive ? color.withOpacity(0.15) : Colors.transparent,
+                            borderRadius: BorderRadius.circular(9),
+                            boxShadow: isActive ? [BoxShadow(color: color.withOpacity(0.4), blurRadius: 12)] : null,
+                          ),
+                          child: Icon(tab.icon,
+                            size: isActive ? 18 : 16,
+                            color: isActive ? color : const Color(0xFF3A4558),
+                            shadows: isActive ? [Shadow(color: color.withOpacity(0.8), blurRadius: 10)] : null,
                           ),
                         ),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            tab.icon,
-                            style: TextStyle(
-                              fontSize: isActive ? 20 : 18,
-                            ),
+                        const SizedBox(height: 2),
+                        AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 200),
+                          style: TextStyle(
+                            color: isActive ? color : const Color(0xFF3A4558),
+                            fontSize: isActive ? 8 : 7,
+                            fontWeight: isActive ? FontWeight.w900 : FontWeight.w500,
+                            letterSpacing: isActive ? 0.3 : 0,
+                            shadows: isActive ? [Shadow(color: color.withOpacity(0.6), blurRadius: 6)] : null,
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            tab.label,
-                            style: TextStyle(
-                              color: isActive ? AppColors.neonCyan : AppColors.textMuted,
-                              fontSize: 8,
-                              fontWeight: isActive ? FontWeight.w800 : FontWeight.normal,
-                              shadows: isActive
-                                  ? [const Shadow(color: AppColors.neonCyan, blurRadius: 6)]
-                                  : null,
-                            ),
-                          ),
-                        ],
-                      ),
+                          child: Text(tab.label),
+                        ),
+                      ],
                     ),
                   ),
-                );
-              }),
-            ),
+                ),
+              );
+            }),
           ),
         ),
       ),
@@ -102,8 +131,9 @@ class MainShell extends ConsumerWidget {
 }
 
 class _TabItem {
-  final String icon;
+  final IconData icon;
   final String label;
   final String path;
-  const _TabItem({required this.icon, required this.label, required this.path});
+  final Color color;
+  const _TabItem({required this.icon, required this.label, required this.path, required this.color});
 }

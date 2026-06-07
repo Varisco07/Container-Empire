@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/player_service.dart';
 import '../../../core/services/service_locator.dart';
@@ -14,25 +13,6 @@ class ShopScreen extends ConsumerStatefulWidget {
 }
 
 class _ShopScreenState extends ConsumerState<ShopScreen> {
-  // Track daily free claims (in-session; in prod would persist via Hive)
-  final Set<String> _claimed = {};
-
-  Future<void> _claimFree(String id, double coins, int gems) async {
-    if (_claimed.contains(id)) return;
-    final ps = sl<PlayerService>();
-    if (coins > 0) await ps.addCoins(coins);
-    if (gems > 0) await ps.addGems(gems);
-    ref.read(playerNotifierProvider.notifier).refresh();
-    setState(() => _claimed.add(id));
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('✅ Riscattato! ${coins > 0 ? "+${_fmt(coins)}€  " : ""}${gems > 0 ? "+$gems💎" : ""}'),
-        backgroundColor: AppColors.neonGreen,
-        duration: const Duration(seconds: 2),
-      ));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final playerAsync = ref.watch(playerNotifierProvider);
@@ -60,27 +40,6 @@ class _ShopScreenState extends ConsumerState<ShopScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // ─── Ricompense gratuite ───────────────────────────────────────────
-          _SectionHeader(title: 'RICOMPENSE GRATUITE', icon: Icons.card_giftcard_rounded, color: AppColors.neonGreen),
-          const SizedBox(height: 12),
-          ...[
-            _FreeReward(id: 'free_500', label: 'Bonus Starter', desc: '+500€ · ogni giorno',
-                emoji: '💰', coins: 500, gems: 0, color: AppColors.coins),
-            _FreeReward(id: 'free_2gems', label: 'Gemme Gratis', desc: '+2💎 · ogni giorno',
-                emoji: '💎', coins: 0, gems: 2, color: AppColors.gems),
-            _FreeReward(id: 'free_combo', label: 'Pacchetto Combo', desc: '+200€ + 1💎 · ogni giorno',
-                emoji: '🎁', coins: 200, gems: 1, color: AppColors.neonPurple),
-          ].asMap().entries.map((e) => Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: _FreeRewardTile(
-              reward: e.value,
-              isClaimed: _claimed.contains(e.value.id),
-              onClaim: () => _claimFree(e.value.id, e.value.coins, e.value.gems),
-            ),
-          ).animate(delay: Duration(milliseconds: e.key * 80)).fadeIn(duration: 300.ms).slideX(begin: -0.05, end: 0)),
-
-          const SizedBox(height: 24),
-
           // ─── Pacchetti coin con gemme ──────────────────────────────────────
           _SectionHeader(title: 'SCAMBIA GEMME PER MONETE', icon: Icons.swap_horiz_rounded, color: AppColors.neonCyan),
           const SizedBox(height: 12),
@@ -166,57 +125,6 @@ class _CurrChip extends StatelessWidget {
       Text(value, style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 12)),
     ]),
   );
-}
-
-// ─── Free rewards ─────────────────────────────────────────────────────────────
-
-class _FreeReward {
-  final String id, label, desc, emoji; final double coins; final int gems; final Color color;
-  const _FreeReward({required this.id, required this.label, required this.desc,
-      required this.emoji, required this.coins, required this.gems, required this.color});
-}
-
-class _FreeRewardTile extends StatelessWidget {
-  final _FreeReward reward; final bool isClaimed; final VoidCallback onClaim;
-  const _FreeRewardTile({required this.reward, required this.isClaimed, required this.onClaim});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isClaimed ? AppColors.textMuted : reward.color;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface, borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isClaimed ? AppColors.border : color.withOpacity(0.5)),
-        boxShadow: isClaimed ? null : [BoxShadow(color: color.withOpacity(0.1), blurRadius: 12)],
-      ),
-      child: Row(
-        children: [
-          Text(reward.emoji, style: const TextStyle(fontSize: 32)),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(reward.label, style: TextStyle(color: isClaimed ? AppColors.textMuted : AppColors.textPrimary,
-                  fontWeight: FontWeight.w800, fontSize: 14)),
-              Text(reward.desc, style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
-            ]),
-          ),
-          const SizedBox(width: 10),
-          isClaimed
-              ? const Icon(Icons.check_circle_rounded, color: AppColors.neonGreen, size: 32)
-              : ElevatedButton(
-                  onPressed: onClaim,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: reward.color, foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text('PRENDI', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
-                ),
-        ],
-      ),
-    );
-  }
 }
 
 // ─── Gem exchange ─────────────────────────────────────────────────────────────

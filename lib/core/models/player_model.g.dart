@@ -42,13 +42,15 @@ class PlayerModelAdapter extends TypeAdapter<PlayerModel> {
       totalItemsSold: (fields[25] as num?)?.toInt() ?? 0,
       totalRaresFound: (fields[26] as num?)?.toInt() ?? 0,
       mutationBoost: (fields[27] as num?)?.toDouble() ?? 1.0,
+      prestigeLevel: (fields[28] as num?)?.toInt() ?? 0,
+      prestigeLuckBonus: (fields[29] as num?)?.toDouble() ?? 0.0,
     );
   }
 
   @override
   void write(BinaryWriter writer, PlayerModel obj) {
     writer
-      ..writeByte(28)
+      ..writeByte(30)
       ..writeByte(0)
       ..write(obj.uid)
       ..writeByte(1)
@@ -104,7 +106,11 @@ class PlayerModelAdapter extends TypeAdapter<PlayerModel> {
       ..writeByte(26)
       ..write(obj.totalRaresFound)
       ..writeByte(27)
-      ..write(obj.mutationBoost);
+      ..write(obj.mutationBoost)
+      ..writeByte(28)
+      ..write(obj.prestigeLevel)
+      ..writeByte(29)
+      ..write(obj.prestigeLuckBonus);
   }
 
   @override

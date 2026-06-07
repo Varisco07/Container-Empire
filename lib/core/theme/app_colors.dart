@@ -33,6 +33,7 @@ class AppColors {
   static const Color mythic = Color(0xFFFF6B00);
   static const Color divine = Color(0xFFFF0080);
   static const Color secret = Color(0xFF00F5FF);
+  static const Color cosmic = Color(0xFFFFFFFF); // prismatic white — glows with rainbow
 
   // Mutation colors
   static const Color golden = Color(0xFFFFD700);
@@ -60,6 +61,7 @@ class AppColors {
       case 'mythic': return mythic;
       case 'divine': return divine;
       case 'secret': return secret;
+      case 'cosmic': return cosmic;
       default: return common;
     }
   }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/services/player_service.dart';
 import '../../../core/services/service_locator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../widgets/common/neon_text.dart';
@@ -77,6 +79,11 @@ class ProfileScreen extends ConsumerWidget {
 
             const SizedBox(height: 24),
 
+            // Prestige section
+            _PrestigeSection(player: p),
+
+            const SizedBox(height: 24),
+
             // Settings section
             _SettingsSection(),
           ],
@@ -90,6 +97,206 @@ class ProfileScreen extends ConsumerWidget {
     if (v >= 1e6) return '${(v / 1e6).toStringAsFixed(1)}M€';
     if (v >= 1e3) return '${(v / 1e3).toStringAsFixed(0)}K€';
     return '${v.toStringAsFixed(0)}€';
+  }
+}
+
+// ─── Prestige Section ─────────────────────────────────────────────────────────
+
+class _PrestigeSection extends ConsumerWidget {
+  final dynamic player;
+  const _PrestigeSection({required this.player});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ps = sl<PlayerService>();
+    final canPrestige = player.level >= PlayerService.prestigeMinLevel;
+    final prestigeLevel = player.prestigeLevel as int;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: canPrestige
+              ? [AppColors.neonPurple.withOpacity(0.2), AppColors.neonPink.withOpacity(0.1)]
+              : [AppColors.surface, AppColors.surface],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: canPrestige ? AppColors.neonPurple.withOpacity(0.8) : AppColors.border,
+          width: canPrestige ? 1.5 : 1,
+        ),
+        boxShadow: canPrestige
+            ? [BoxShadow(color: AppColors.neonPurple.withOpacity(0.25), blurRadius: 20)]
+            : null,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text('⚜️', style: TextStyle(fontSize: 22)),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'SISTEMA PRESTIGE',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  Text(
+                    prestigeLevel > 0
+                        ? 'Prestige $prestigeLevel  ·  +${((player.prestigeLuckBonus as double) * 100).toStringAsFixed(0)}% Fortuna permanente'
+                        : 'Reset e ricomincia più forte',
+                    style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                  ),
+                ],
+              ),
+              if (prestigeLevel > 0) ...[
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [AppColors.neonPurple, AppColors.neonPink]),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    'P${prestigeLevel}',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          if (!canPrestige) ...[
+            // Progress to prestige
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Livello ${player.level} / ${PlayerService.prestigeMinLevel}',
+                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+                    ),
+                    Text(
+                      'Mancano ${PlayerService.prestigeMinLevel - (player.level as int)} livelli',
+                      style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: (player.level as int) / PlayerService.prestigeMinLevel,
+                    backgroundColor: AppColors.background,
+                    valueColor: const AlwaysStoppedAnimation(AppColors.neonPurple),
+                    minHeight: 6,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Al Prestige riceverai: +${(PlayerService.prestigeLuckPerLevel * 100).toStringAsFixed(0)}% Fortuna permanente',
+                  style: const TextStyle(color: AppColors.textMuted, fontSize: 10),
+                ),
+              ],
+            ),
+          ] else ...[
+            // Prestige available!
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.neonPurple.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                '⚠️ Reset: livello, XP, upgrade, monete\n✅ Mantieni: gemme, inventario, prestige bonus',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 11, height: 1.5),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => _showPrestigeConfirm(context, ref, ps),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.neonPurple,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                ),
+                child: const Text(
+                  '⚜️  ESEGUI PRESTIGE',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1.5),
+                ),
+              ),
+            ).animate(onPlay: (c) => c.repeat(reverse: true))
+              .shimmer(duration: 1800.ms, color: Colors.white24),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _showPrestigeConfirm(BuildContext context, WidgetRef ref, PlayerService ps) {
+    showDialog(
+      context: context,
+      builder: (dCtx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Row(
+          children: [
+            Text('⚜️', style: TextStyle(fontSize: 28)),
+            SizedBox(width: 10),
+            Text('PRESTIGE', style: TextStyle(color: AppColors.neonPurple, fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: 2)),
+          ],
+        ),
+        content: const Text(
+          'Sei sicuro?\n\nVerranno azzerati:\n• Livello → 1\n• XP e upgrade\n• Monete → 500€\n\nIn cambio ottieni:\n• +15% Fortuna PERMANENTE\n• Badge Prestige esclusivo\n• Moltiplicatore cumulativo per ogni prestige futuro',
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.6),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dCtx).pop(),
+            child: const Text('Annulla', style: TextStyle(color: AppColors.textMuted)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.neonPurple,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () async {
+              Navigator.of(dCtx).pop();
+              final result = await ps.prestige();
+              if (result.success) {
+                ref.read(playerNotifierProvider.notifier).refresh();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        '⚜️ PRESTIGE ${result.prestigeLevel} ATTIVATO! +${(result.totalLuckBonus * 100).toStringAsFixed(0)}% Fortuna permanente!',
+                      ),
+                      backgroundColor: AppColors.neonPurple,
+                      duration: const Duration(seconds: 4),
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('PRESTIGE!', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
+          ),
+        ],
+      ),
+    );
   }
 }
 

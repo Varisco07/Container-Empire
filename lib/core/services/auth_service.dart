@@ -73,6 +73,7 @@ class AuthService {
     );
     await _accounts.put(uid, account);
     await _authState.put(_currentUidKey, uid);
+    await _authState.flush();
     return AuthResult.success;
   }
 
@@ -93,11 +94,13 @@ class AuthService {
       return AuthResult.wrongPassword;
     }
     await _authState.put(_currentUidKey, account.uid);
+    await _authState.flush();
     return AuthResult.success;
   }
 
   Future<void> logout() async {
     await _authState.delete(_currentUidKey);
+    await _authState.flush();
   }
 
   // ─── Player save/load per account ─────────────────────────────────────────

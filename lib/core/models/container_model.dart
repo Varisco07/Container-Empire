@@ -60,16 +60,16 @@ class ContainerModel {
 // ─────────────────────────────────────────────────────────────────────────────
 
 final List<ContainerModel> containerCatalog = [
-  // FREE — costo 0, media rientro ~3-8€
+  // FREE — gratuito ogni 6h
   ContainerModel(
     id: 'free',
     name: 'FREE CONTAINER',
-    description: 'Il tuo primo container. Buona fortuna!',
+    description: 'Il tuo container gratuito. Ritorna ogni 6 ore!',
     cost: 0,
     isFree: true,
-    colorHex: '#4A6080',
-    iconAsset: 'assets/images/container_free.png',
-    animationAsset: 'assets/animations/container_free.json',
+    colorHex: '#34D399',
+    iconAsset: 'assets/images/container_basic.png',
+    animationAsset: 'assets/animations/container_basic.json',
     lootTable: _buildLootTable('free'),
   ),
   // BASIC — costo 100€, jackpot normale ~1K, jackpot void ~250K
@@ -237,6 +237,10 @@ List<LootEntry> _buildLootTable(String containerId) {
       LootEntry(itemName: 'Singolarità Compressa',   itemCategory: 'Quantum',        iconAsset: '', baseValue: 150000, rarity: Rarity.legendary,weight: 1.5),
       LootEntry(itemName: 'Frammento Big Bang',      itemCategory: 'Quantum',        iconAsset: '', baseValue: 150000, rarity: Rarity.divine,   weight: 0.4),
       LootEntry(itemName: 'Ω Omega Particle',        itemCategory: 'Quantum',        iconAsset: '', baseValue: 150000, rarity: Rarity.secret,   weight: 0.1),
+      // 1 in ~1,000,000: notifica globale quando trovato
+      LootEntry(itemName: 'Fenice Cosmica',          itemCategory: 'Cosmico',        iconAsset: '', baseValue: 150000, rarity: Rarity.cosmic,   weight: 0.00001),
+      LootEntry(itemName: 'Cristallo dell\'Universo',itemCategory: 'Cosmico',        iconAsset: '', baseValue: 150000, rarity: Rarity.cosmic,   weight: 0.000005),
+      LootEntry(itemName: 'Singolarità Primordiale', itemCategory: 'Cosmico',        iconAsset: '', baseValue: 150000, rarity: Rarity.cosmic,   weight: 0.000003),
     ],
   };
   return tables[containerId] ?? tables['free']!;

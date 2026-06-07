@@ -222,11 +222,63 @@ class PlayerService {
     final player = localPlayer;
     if (player == null) return;
 
-    player.luckBoost = 1.0 + player.luckUpgradeLevel * 0.15;
+    player.luckBoost = 1.0 + player.luckUpgradeLevel * 0.15 + player.prestigeLuckBonus;
     player.valueBoost = 1.0 + player.valueUpgradeLevel * 0.20;
     player.inventorySlots = 50 + player.slotsUpgradeLevel * 25;
     player.mutationBoost = 1.0 + player.mutationUpgradeLevel * 0.10;
 
     await savePlayer(player);
   }
+
+  // ── Prestige system ───────────────────────────────────────────────────────
+
+  static const int prestigeMinLevel = 20;
+  static const double prestigeLuckPerLevel = 0.15;
+
+  bool get canPrestige => (localPlayer?.level ?? 0) >= prestigeMinLevel;
+
+  Future<PrestigeResult> prestige() async {
+    final player = localPlayer;
+    if (player == null || player.level < prestigeMinLevel) {
+      return PrestigeResult(success: false, prestigeLevel: 0, totalLuckBonus: 0);
+    }
+
+    player.prestigeLevel += 1;
+    player.prestigeLuckBonus += prestigeLuckPerLevel;
+
+    // Reset progression — keep gems and prestige data
+    player.level = 1;
+    player.xp = 0;
+    player.coins = 500;
+    player.luckUpgradeLevel = 0;
+    player.valueUpgradeLevel = 0;
+    player.slotsUpgradeLevel = 0;
+    player.mutationUpgradeLevel = 0;
+    player.autoOpenUpgradeLevel = 0;
+    player.autoSellUpgradeLevel = 0;
+
+    // Re-apply effects so luckBoost includes prestige bonus
+    player.luckBoost = 1.0 + player.prestigeLuckBonus;
+    player.valueBoost = 1.0;
+    player.inventorySlots = 50;
+    player.mutationBoost = 1.0;
+
+    await savePlayer(player);
+    return PrestigeResult(
+      success: true,
+      prestigeLevel: player.prestigeLevel,
+      totalLuckBonus: player.prestigeLuckBonus,
+    );
+  }
+}
+
+class PrestigeResult {
+  final bool success;
+  final int prestigeLevel;
+  final double totalLuckBonus;
+  const PrestigeResult({
+    required this.success,
+    required this.prestigeLevel,
+    required this.totalLuckBonus,
+  });
 }

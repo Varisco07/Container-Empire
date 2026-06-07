@@ -5,13 +5,14 @@ import '../../../core/services/player_service.dart';
 import '../../../core/services/service_locator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../features/profile/providers/player_provider.dart';
-import '../../../widgets/common/neon_text.dart';
+
+// ─── Upgrade definitions ──────────────────────────────────────────────────────
 
 class _UpgradeDef {
   final String id;
   final String name;
   final String description;
-  final String emoji;
+  final IconData icon;
   final Color color;
   final int Function(int level) gemCost;
   final String Function(int level) effectLabel;
@@ -22,7 +23,7 @@ class _UpgradeDef {
     required this.id,
     required this.name,
     required this.description,
-    required this.emoji,
+    required this.icon,
     required this.color,
     required this.gemCost,
     required this.effectLabel,
@@ -33,30 +34,24 @@ class _UpgradeDef {
 
 final _upgrades = <_UpgradeDef>[
   _UpgradeDef(
-    id: 'luck',
-    name: 'FORTUNA',
-    description: 'Riduce la probabilità di comune e aumenta quella di raro+',
-    emoji: '🍀',
+    id: 'luck', name: 'FORTUNA', icon: Icons.auto_awesome_rounded,
+    description: 'Aumenta le chance di oggetti Rari, Epici e oltre',
     color: AppColors.neonGold,
     gemCost: (lvl) => 5 + lvl * 10,
-    effectLabel: (lvl) => lvl == 0 ? 'Nessun bonus' : '×${(1.0 + lvl * 0.15).toStringAsFixed(2)} Fortuna',
+    effectLabel: (lvl) => lvl == 0 ? 'Base' : '×${(1.0 + lvl * 0.15).toStringAsFixed(2)} Fortuna',
     nextLabel: (lvl) => '→ ×${(1.0 + (lvl + 1) * 0.15).toStringAsFixed(2)} Fortuna',
   ),
   _UpgradeDef(
-    id: 'value',
-    name: 'VALUE BOOST',
+    id: 'value', name: 'VALUE BOOST', icon: Icons.trending_up_rounded,
     description: 'Moltiplica il valore di vendita di tutti gli oggetti',
-    emoji: '📈',
     color: AppColors.coins,
     gemCost: (lvl) => 8 + lvl * 12,
-    effectLabel: (lvl) => lvl == 0 ? 'Nessun bonus' : '+${(lvl * 20)}% valore vendita',
-    nextLabel: (lvl) => '→ +${((lvl + 1) * 20)}% valore vendita',
+    effectLabel: (lvl) => lvl == 0 ? 'Base' : '+${lvl * 20}% valore',
+    nextLabel: (lvl) => '→ +${(lvl + 1) * 20}% valore',
   ),
   _UpgradeDef(
-    id: 'slots',
-    name: 'INVENTARIO +',
+    id: 'slots', name: 'INVENTARIO', icon: Icons.inventory_2_rounded,
     description: 'Espande la capienza dell\'inventario di 25 slot per livello',
-    emoji: '🗄️',
     color: AppColors.neonPurple,
     gemCost: (lvl) => 3 + lvl * 5,
     effectLabel: (lvl) => '${50 + lvl * 25} slot totali',
@@ -64,35 +59,29 @@ final _upgrades = <_UpgradeDef>[
     maxLevel: 20,
   ),
   _UpgradeDef(
-    id: 'mutation',
-    name: 'MUTATION RATE',
-    description: 'Aumenta la probabilità di ottenere mutazioni golden, diamond e galaxy',
-    emoji: '🧬',
+    id: 'mutation', name: 'MUTAZIONE', icon: Icons.science_rounded,
+    description: 'Aumenta la probabilità di mutazioni Golden, Diamond e Galaxy',
     color: AppColors.neonGreen,
     gemCost: (lvl) => 15 + lvl * 20,
-    effectLabel: (lvl) => lvl == 0 ? 'Nessun bonus' : '+${lvl * 10}% chance mutazione',
-    nextLabel: (lvl) => '→ +${(lvl + 1) * 10}% chance mutazione',
+    effectLabel: (lvl) => lvl == 0 ? 'Base' : '+${lvl * 10}% mutazione',
+    nextLabel: (lvl) => '→ +${(lvl + 1) * 10}% mutazione',
   ),
   _UpgradeDef(
-    id: 'auto_open',
-    name: 'AUTO OPEN',
-    description: 'Apre automaticamente container FREE ogni N secondi mentre sei nella home',
-    emoji: '🤖',
+    id: 'auto_open', name: 'AUTO OPEN', icon: Icons.smart_toy_rounded,
+    description: 'Apre automaticamente container ogni tot secondi',
     color: AppColors.neonCyan,
     gemCost: (lvl) => 50 + lvl * 30,
-    effectLabel: (lvl) => lvl == 0 ? 'Non attivo' : '1 free ogni ${60 ~/ lvl}s',
-    nextLabel: (lvl) => '→ 1 free ogni ${lvl == 0 ? 60 : 60 ~/ (lvl + 1)}s',
+    effectLabel: (lvl) => lvl == 0 ? 'Non attivo' : '1 ogni ${60 ~/ lvl}s',
+    nextLabel: (lvl) => '→ 1 ogni ${lvl == 0 ? 60 : 60 ~/ (lvl + 1)}s',
     maxLevel: 5,
   ),
   _UpgradeDef(
-    id: 'auto_sell',
-    name: 'AUTO SELL',
-    description: 'Vende automaticamente gli oggetti fino alla rarità selezionata',
-    emoji: '💸',
+    id: 'auto_sell', name: 'AUTO SELL', icon: Icons.sell_rounded,
+    description: 'Vende automaticamente oggetti fino alla rarità selezionata',
     color: AppColors.neonOrange,
     gemCost: (lvl) => 25 + lvl * 15,
-    effectLabel: (lvl) => lvl == 0 ? 'Non attivo' : 'Vende fino a: ${_rarityLabel(lvl)}',
-    nextLabel: (lvl) => '→ vende fino a: ${_rarityLabel(lvl + 1)}',
+    effectLabel: (lvl) => lvl == 0 ? 'Non attivo' : 'Fino a: ${_rarityLabel(lvl)}',
+    nextLabel: (lvl) => '→ fino a: ${_rarityLabel(lvl + 1)}',
     maxLevel: 4,
   ),
 ];
@@ -105,32 +94,15 @@ String _rarityLabel(int level) {
   return 'Epico';
 }
 
-int _getLevelFromPlayer(String id) {
-  final ps = sl<PlayerService>();
-  final p = ps.localPlayer;
-  if (p == null) return 0;
-  switch (id) {
-    case 'luck': return p.luckUpgradeLevel;
-    case 'value': return p.valueUpgradeLevel;
-    case 'slots': return p.slotsUpgradeLevel;
-    case 'mutation': return p.mutationUpgradeLevel;
-    case 'auto_open': return p.autoOpenUpgradeLevel;
-    case 'auto_sell': return p.autoSellUpgradeLevel;
-    default: return 0;
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Screen ───────────────────────────────────────────────────────────────────
 
 class UpgradesScreen extends ConsumerStatefulWidget {
   const UpgradesScreen({super.key});
-
   @override
   ConsumerState<UpgradesScreen> createState() => _UpgradesScreenState();
 }
 
 class _UpgradesScreenState extends ConsumerState<UpgradesScreen> {
-  // Levels are loaded from PlayerModel on init and kept in sync
   final Map<String, int> _levels = {
     'luck': 0, 'value': 0, 'slots': 0, 'mutation': 0, 'auto_open': 0, 'auto_sell': 0,
   };
@@ -142,33 +114,37 @@ class _UpgradesScreenState extends ConsumerState<UpgradesScreen> {
   }
 
   void _loadLevels() {
-    for (final id in _levels.keys) {
-      _levels[id] = _getLevelFromPlayer(id);
-    }
+    final p = sl<PlayerService>().localPlayer;
+    if (p == null) return;
+    _levels['luck']      = p.luckUpgradeLevel;
+    _levels['value']     = p.valueUpgradeLevel;
+    _levels['slots']     = p.slotsUpgradeLevel;
+    _levels['mutation']  = p.mutationUpgradeLevel;
+    _levels['auto_open'] = p.autoOpenUpgradeLevel;
+    _levels['auto_sell'] = p.autoSellUpgradeLevel;
   }
 
   Future<void> _upgrade(_UpgradeDef def) async {
     final lvl = _levels[def.id] ?? 0;
     if (lvl >= def.maxLevel) {
-      _showSnack('⭐ Livello massimo raggiunto!', AppColors.neonGold);
+      _snack('⭐ Livello massimo raggiunto!', AppColors.neonGold);
       return;
     }
     final cost = def.gemCost(lvl);
     final ps = sl<PlayerService>();
     final ok = await ps.spendGems(cost);
     if (!ok) {
-      _showSnack('Gemme insufficienti! Servono $cost 💎', AppColors.error);
+      _snack('Gemme insufficienti! Servono $cost 💎', AppColors.error);
       return;
     }
 
-    // Persist upgrade level in PlayerModel
     final player = ps.localPlayer;
     if (player != null) {
       final newLevel = lvl + 1;
       switch (def.id) {
         case 'luck':
           player.luckUpgradeLevel = newLevel;
-          player.luckBoost = 1.0 + newLevel * 0.15;
+          player.luckBoost = 1.0 + newLevel * 0.15 + player.prestigeLuckBonus;
         case 'value':
           player.valueUpgradeLevel = newLevel;
           player.valueBoost = 1.0 + newLevel * 0.20;
@@ -190,111 +166,81 @@ class _UpgradesScreenState extends ConsumerState<UpgradesScreen> {
 
     setState(() => _levels[def.id] = lvl + 1);
     ref.read(playerNotifierProvider.notifier).refresh();
-    _showSnack('✅ ${def.name} → LV ${lvl + 1}!', AppColors.success);
+    _snack('✅ ${def.name} → LV ${lvl + 1}!', AppColors.success);
   }
 
-  void _showSnack(String msg, Color color) {
+  void _snack(String msg, Color color) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: color, duration: const Duration(seconds: 2)),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(msg, style: const TextStyle(fontWeight: FontWeight.w700)),
+      backgroundColor: color,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      duration: const Duration(seconds: 2),
+    ));
   }
 
   @override
   Widget build(BuildContext context) {
     final playerAsync = ref.watch(playerNotifierProvider);
-    final gems = playerAsync.when(
-      data: (p) => p.gems,
-      loading: () => 0,
-      error: (_, __) => 0,
-    );
+    final gems = playerAsync.maybeWhen(data: (p) => p.gems, orElse: () => 0);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('POTENZIAMENTI'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.gems.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.gems.withOpacity(0.5)),
-              ),
-              child: Row(
-                children: [
-                  const Text('💎', style: TextStyle(fontSize: 16)),
-                  const SizedBox(width: 4),
-                  Text('$gems',
-                      style: const TextStyle(
-                          color: AppColors.gems, fontWeight: FontWeight.w900, fontSize: 15)),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Header
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [
-                AppColors.gems.withOpacity(0.12),
-                AppColors.neonPurple.withOpacity(0.06),
-              ]),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.gems.withOpacity(0.4)),
-            ),
-            child: Row(
-              children: [
-                const Text('💎', style: TextStyle(fontSize: 24)),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('I potenziamenti usano GEMME',
-                          style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 13)),
-                      SizedBox(height: 2),
-                      Text('Guadagna gemme salendo di livello e aprendo container. I livelli vengono salvati!',
-                          style: TextStyle(color: AppColors.textMuted, fontSize: 10)),
-                    ],
-                  ),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            title: const Text('POTENZIAMENTI',
+                style: TextStyle(letterSpacing: 2, fontWeight: FontWeight.w900)),
+            floating: true,
+            snap: true,
+            backgroundColor: AppColors.background,
+            surfaceTintColor: Colors.transparent,
+            actions: [
+              Container(
+                margin: const EdgeInsets.only(right: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.gems.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.gems.withOpacity(0.4)),
                 ),
-              ],
-            ),
-          ).animate().fadeIn(duration: 400.ms),
+                child: Row(
+                  children: [
+                    const Text('💎', style: TextStyle(fontSize: 16)),
+                    const SizedBox(width: 6),
+                    Text('$gems',
+                        style: const TextStyle(
+                            color: AppColors.gems, fontWeight: FontWeight.w900, fontSize: 16)),
+                  ],
+                ),
+              ),
+            ],
+          ),
 
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              itemCount: _upgrades.length,
-              itemBuilder: (_, i) {
-                final def = _upgrades[i];
-                final lvl = _levels[def.id] ?? 0;
-                final cost = def.gemCost(lvl);
-                final isMaxed = lvl >= def.maxLevel;
-                final canAfford = gems >= cost;
-
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _UpgradeCard(
-                    def: def,
-                    level: lvl,
-                    gemCost: cost,
-                    isMaxed: isMaxed,
-                    canAfford: canAfford,
-                    onUpgrade: () => _upgrade(def),
-                  ),
-                ).animate(delay: Duration(milliseconds: i * 60))
-                  .fadeIn(duration: 300.ms)
-                  .slideY(begin: 0.1, end: 0);
-              },
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (_, i) {
+                  final def = _upgrades[i];
+                  final lvl = _levels[def.id] ?? 0;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _UpgradeCard(
+                      def: def,
+                      level: lvl,
+                      gemCost: def.gemCost(lvl),
+                      isMaxed: lvl >= def.maxLevel,
+                      canAfford: gems >= def.gemCost(lvl),
+                      onUpgrade: () => _upgrade(def),
+                    ),
+                  ).animate(delay: Duration(milliseconds: i * 60))
+                    .fadeIn(duration: 300.ms)
+                    .slideY(begin: 0.08, end: 0, curve: Curves.easeOutCubic);
+                },
+                childCount: _upgrades.length,
+              ),
             ),
           ),
         ],
@@ -302,6 +248,8 @@ class _UpgradesScreenState extends ConsumerState<UpgradesScreen> {
     );
   }
 }
+
+// ─── Upgrade card ─────────────────────────────────────────────────────────────
 
 class _UpgradeCard extends StatelessWidget {
   final _UpgradeDef def;
@@ -312,142 +260,207 @@ class _UpgradeCard extends StatelessWidget {
   final VoidCallback onUpgrade;
 
   const _UpgradeCard({
-    required this.def,
-    required this.level,
-    required this.gemCost,
-    required this.isMaxed,
-    required this.canAfford,
-    required this.onUpgrade,
+    required this.def, required this.level, required this.gemCost,
+    required this.isMaxed, required this.canAfford, required this.onUpgrade,
   });
 
   @override
   Widget build(BuildContext context) {
     final color = isMaxed ? AppColors.neonGold : def.color;
+    final lvlFraction = level / def.maxLevel;
 
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: color.withOpacity(isMaxed ? 0.7 : 0.3)),
-        boxShadow: [BoxShadow(color: color.withOpacity(isMaxed ? 0.15 : 0.05), blurRadius: 12)],
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isMaxed ? AppColors.neonGold.withOpacity(0.6) : color.withOpacity(0.25),
+        ),
+        boxShadow: isMaxed
+            ? [BoxShadow(color: AppColors.neonGold.withOpacity(0.15), blurRadius: 20)]
+            : null,
       ),
-      child: Row(
+      child: Column(
         children: [
-          // Icon
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: color.withOpacity(0.4)),
-              boxShadow: [BoxShadow(color: color.withOpacity(0.2), blurRadius: 8)],
-            ),
-            child: Center(child: Text(def.emoji, style: const TextStyle(fontSize: 26))),
-          ),
-
-          const SizedBox(width: 14),
-
-          // Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          // Header row
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 12, 12),
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    NeonText(def.name, color: color, fontSize: 13, blurRadius: 5),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: isMaxed ? AppColors.neonGold.withOpacity(0.2) : color.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        isMaxed ? '⭐ MAX' : 'LV $level',
-                        style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.w900),
-                      ),
+                // Icon container
+                Container(
+                  width: 56, height: 56,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft, end: Alignment.bottomRight,
+                      colors: [color.withOpacity(0.25), color.withOpacity(0.08)],
                     ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(def.description,
-                    style: const TextStyle(color: AppColors.textMuted, fontSize: 9)),
-                const SizedBox(height: 4),
-                Text(
-                  def.effectLabel(level),
-                  style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700),
-                ),
-                if (!isMaxed && level > 0)
-                  Text(
-                    def.nextLabel(level),
-                    style: TextStyle(color: color.withOpacity(0.5), fontSize: 9),
+                    border: Border.all(color: color.withOpacity(0.5)),
+                    boxShadow: [BoxShadow(color: color.withOpacity(0.25), blurRadius: 12)],
                   ),
+                  child: Icon(def.icon, color: color, size: 28,
+                      shadows: [Shadow(color: color.withOpacity(0.6), blurRadius: 8)]),
+                ),
+                const SizedBox(width: 14),
 
-                const SizedBox(height: 8),
-                // Progress bar
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
-                  child: LinearProgressIndicator(
-                    value: level / def.maxLevel,
-                    backgroundColor: AppColors.border,
-                    valueColor: AlwaysStoppedAnimation<Color>(color),
-                    minHeight: 5,
+                // Name + description
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(def.name,
+                              style: TextStyle(
+                                  color: color, fontSize: 14,
+                                  fontWeight: FontWeight.w900, letterSpacing: 0.5,
+                                  shadows: [Shadow(color: color.withOpacity(0.5), blurRadius: 6)])),
+                          const SizedBox(width: 8),
+                          _LevelBadge(level: level, maxLevel: def.maxLevel, color: color, isMaxed: isMaxed),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(def.description,
+                          style: const TextStyle(color: AppColors.textMuted, fontSize: 10)),
+                      const SizedBox(height: 6),
+                      Text(
+                        def.effectLabel(level),
+                        style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700),
+                      ),
+                      if (!isMaxed && level > 0)
+                        Text(def.nextLabel(level),
+                            style: TextStyle(color: color.withOpacity(0.5), fontSize: 10)),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text('$level / ${def.maxLevel}',
-                    style: const TextStyle(color: AppColors.textMuted, fontSize: 9)),
+
+                const SizedBox(width: 10),
+
+                // Upgrade button
+                if (!isMaxed)
+                  _UpgradeButton(
+                    gemCost: gemCost, canAfford: canAfford, color: color, onTap: onUpgrade,
+                  )
+                else
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(colors: [AppColors.neonGold, Color(0xFFFF9500)]),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('⭐', style: TextStyle(fontSize: 18)),
+                        Text('MAX', style: TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.w900)),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
 
-          const SizedBox(width: 12),
-
-          // Button
-          if (!isMaxed)
-            GestureDetector(
-              onTap: onUpgrade,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                decoration: BoxDecoration(
-                  color: canAfford ? color.withOpacity(0.15) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: canAfford ? color : AppColors.border),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(canAfford ? '⬆️' : '🔒', style: const TextStyle(fontSize: 18)),
-                    const SizedBox(height: 4),
-                    const Text('💎', style: TextStyle(fontSize: 12)),
-                    Text(
-                      '$gemCost',
-                      style: TextStyle(
-                        color: canAfford ? AppColors.gems : AppColors.textMuted,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
+          // Progress bar footer
+          Container(
+            height: 4,
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: Stack(
+                children: [
+                  Container(color: AppColors.border),
+                  FractionallySizedBox(
+                    widthFactor: lvlFraction,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(colors: [
+                          isMaxed ? AppColors.neonGold : color,
+                          isMaxed ? const Color(0xFFFF9500) : color.withOpacity(0.7),
+                        ]),
+                        boxShadow: [BoxShadow(color: color.withOpacity(0.5), blurRadius: 4)],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            )
-          else
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.neonGold.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.neonGold.withOpacity(0.5)),
-              ),
-              child: const Text('⭐\nMAX',
-                  style: TextStyle(color: AppColors.neonGold, fontSize: 10, fontWeight: FontWeight.w900),
-                  textAlign: TextAlign.center),
             ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _LevelBadge extends StatelessWidget {
+  final int level, maxLevel;
+  final Color color;
+  final bool isMaxed;
+  const _LevelBadge({required this.level, required this.maxLevel, required this.color, required this.isMaxed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: isMaxed ? AppColors.neonGold.withOpacity(0.15) : color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: isMaxed ? AppColors.neonGold.withOpacity(0.5) : color.withOpacity(0.3)),
+      ),
+      child: Text(
+        isMaxed ? '⭐ MAX' : 'LV $level / $maxLevel',
+        style: TextStyle(
+          color: isMaxed ? AppColors.neonGold : color,
+          fontSize: 9, fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _UpgradeButton extends StatelessWidget {
+  final int gemCost;
+  final bool canAfford;
+  final Color color;
+  final VoidCallback onTap;
+  const _UpgradeButton({required this.gemCost, required this.canAfford, required this.color, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: canAfford
+              ? LinearGradient(colors: [color, color.withOpacity(0.7)])
+              : null,
+          color: canAfford ? null : AppColors.border.withOpacity(0.3),
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: canAfford
+              ? [BoxShadow(color: color.withOpacity(0.4), blurRadius: 12)]
+              : null,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              canAfford ? Icons.arrow_upward_rounded : Icons.lock_rounded,
+              color: canAfford ? Colors.white : AppColors.textMuted,
+              size: 20,
+            ),
+            const SizedBox(height: 3),
+            const Text('💎', style: TextStyle(fontSize: 11)),
+            Text(
+              '$gemCost',
+              style: TextStyle(
+                color: canAfford ? Colors.white : AppColors.textMuted,
+                fontSize: 12, fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

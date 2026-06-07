@@ -12,7 +12,9 @@ import '../../../core/services/rng_service.dart';
 import '../../../core/services/service_locator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../features/profile/providers/player_provider.dart';
+import '../../../widgets/common/lucky_meter.dart';
 import '../../../widgets/common/neon_text.dart';
+import '../../../widgets/common/share_drop_dialog.dart';
 import '../game/container_animation_widget.dart';
 import '../widgets/item_reveal_card.dart';
 import '../widgets/roulette_widget.dart';
@@ -346,6 +348,7 @@ class _ContainerOpeningScreenState extends ConsumerState<ContainerOpeningScreen>
         return _RevealPhase(
           item: _revealedItem!, onKeep: _keepItem, onSell: _sellItem,
           onOpenAnother: _reset, actionDone: _actionDone, actionMessage: _actionMessage,
+          username: sl<PlayerService>().localPlayer?.username ?? 'Player',
         );
       case OpeningPhase.multiReveal:
         return _MultiRevealPhase(
@@ -354,9 +357,11 @@ class _ContainerOpeningScreenState extends ConsumerState<ContainerOpeningScreen>
           onKeepAll: _multiKeepAll, onOpenAnother: _reset,
         );
       case OpeningPhase.idle:
+        final player = sl<PlayerService>().localPlayer;
         return _IdlePhase(
           container: _container, containerColor: _containerColor,
           containerEmoji: _containerEmoji, quantity: _quantity,
+          pityCounter: player?.pityCounter ?? 0,
           onQuantityChanged: (q) => setState(() => _quantity = q),
           onOpen: _quantity == 1 ? _startOpening : _startMultiOpening,
         );
@@ -479,12 +484,14 @@ class _IdlePhase extends StatelessWidget {
   final Color containerColor;
   final String containerEmoji;
   final int quantity;
+  final int pityCounter;
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onOpen;
 
   const _IdlePhase({
     required this.container, required this.containerColor, required this.containerEmoji,
-    required this.quantity, required this.onQuantityChanged, required this.onOpen,
+    required this.quantity, required this.pityCounter,
+    required this.onQuantityChanged, required this.onOpen,
   });
 
   @override
@@ -622,6 +629,11 @@ class _IdlePhase extends StatelessWidget {
                 ),
               ),
             ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.2, end: 0),
+            const SizedBox(height: 16),
+
+            // Lucky Meter
+            LuckyMeter(pityCounter: pityCounter)
+                .animate().fadeIn(duration: 400.ms, delay: 100.ms).slideY(begin: 0.15, end: 0),
             const SizedBox(height: 24),
           ],
         ),
@@ -888,9 +900,11 @@ class _RevealPhase extends StatelessWidget {
   final VoidCallback onKeep, onSell, onOpenAnother;
   final bool actionDone;
   final String actionMessage;
+  final String username;
   const _RevealPhase({
     required this.item, required this.onKeep, required this.onSell,
     required this.onOpenAnother, required this.actionDone, required this.actionMessage,
+    required this.username,
   });
 
   @override
@@ -906,6 +920,48 @@ class _RevealPhase extends StatelessWidget {
                   .scale(begin: const Offset(0.4, 0.4), duration: 600.ms, curve: Curves.elasticOut)
                   .fadeIn(duration: 300.ms),
               const SizedBox(height: 24),
+              // Viral share button for rare+ drops
+              if (shouldShowShare(item.rarityKey)) ...[
+                GestureDetector(
+                  onTap: () => ShareDropDialog.show(
+                    context,
+                    item: item,
+                    username: username,
+                    onDismiss: () => Navigator.of(context, rootNavigator: true).pop(),
+                  ),
+                  child: Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [AppColors.neonPink.withOpacity(0.2), AppColors.neonPurple.withOpacity(0.15)],
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.neonPink.withOpacity(0.7), width: 1.5),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('🔥', style: TextStyle(fontSize: 18)),
+                        SizedBox(width: 8),
+                        Text(
+                          'CONDIVIDI QUESTO DROP!',
+                          style: TextStyle(
+                            color: AppColors.neonPink,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 2,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Text('🔥', style: TextStyle(fontSize: 18)),
+                      ],
+                    ),
+                  ),
+                ).animate(onPlay: (c) => c.repeat(reverse: true))
+                  .shimmer(duration: 1500.ms, color: AppColors.neonPink.withOpacity(0.3)),
+              ],
               if (!actionDone) ...[
                 Row(children: [
                   Expanded(child: _RevBtn(label: 'TIENI', sublabel: 'In inventario', icon: '📦', color: AppColors.neonCyan, onTap: onKeep)),

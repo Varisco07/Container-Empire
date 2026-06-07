@@ -6,7 +6,8 @@ enum Rarity {
   legendary,
   mythic,
   divine,
-  secret;
+  secret,
+  cosmic;
 
   String get displayName {
     switch (this) {
@@ -18,6 +19,7 @@ enum Rarity {
       case Rarity.mythic: return 'MITICO';
       case Rarity.divine: return 'DIVINO';
       case Rarity.secret: return 'SEGRETO';
+      case Rarity.cosmic: return 'COSMICO';
     }
   }
 
@@ -32,6 +34,7 @@ enum Rarity {
       case Rarity.mythic: return 0.15;
       case Rarity.divine: return 0.04;
       case Rarity.secret: return 0.01;
+      case Rarity.cosmic: return 0.000001; // 1 in 100,000,000
     }
   }
 
@@ -39,12 +42,13 @@ enum Rarity {
     switch (this) {
       case Rarity.common: return 1.0;
       case Rarity.uncommon: return 3.0;
-      case Rarity.rare: return 8.0;      // was 10
-      case Rarity.epic: return 22.0;     // was 35
-      case Rarity.legendary: return 80.0;  // was 150
-      case Rarity.mythic: return 250.0;  // was 600
-      case Rarity.divine: return 600.0;  // was 3000
-      case Rarity.secret: return 2000.0; // was 15000
+      case Rarity.rare: return 8.0;
+      case Rarity.epic: return 22.0;
+      case Rarity.legendary: return 80.0;
+      case Rarity.mythic: return 250.0;
+      case Rarity.divine: return 600.0;
+      case Rarity.secret: return 2000.0;
+      case Rarity.cosmic: return 100000.0; // jackpot assoluto
     }
   }
 
