@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Container Empire — Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #050A14;
+    --surface: #0D1526;
+    --surface2: #162035;
+    --nav: #080F1F;
+    --border: #1E3050;
+    --cyan: #00F5FF;
+    --purple: #8B5CF6;
+    --green: #39FF14;
+    --orange: #FF6B00;
+    --gold: #FFD700;
+    --pink: #FF0080;
+    --text: #E8F4FD;
+    --text2: #8BA4C0;
+    --muted: #4A6080;
+    --common: #9CA3AF;
+    --uncommon: #34D399;
+    --rare: #3B82F6;
+    --epic: #A855F7;
+    --legendary: #FFD700;
+    --mythic: #FF6B00;
+    --divine: #FF0080;
+    --secret: #00F5FF;
+  }
+
+  body {
+    font-family: 'Rajdhani', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  .phone {
+    width: 390px;
+    height: 844px;
+    background: var(--bg);
+    border-radius: 44px;
+    border: 2px solid var(--border);
+    box-shadow: 0 0 60px rgba(0,245,255,0.15), 0 0 120px rgba(139,92,246,0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    background: var(--nav);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .level-badge {
+    background: rgba(0,245,255,0.12);
+    border: 1px solid var(--cyan);
+    border-radius: 8px;
+    padding: 4px 10px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--cyan);
+    text-shadow: 0 0 8px var(--cyan);
+    white-space: nowrap;
+  }
+
+  .xp-bar-wrap {
+    flex: 1;
+    height: 8px;
+    background: var(--surface);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .xp-bar-fill {
+    height: 100%;
+    width: 42%;
+    background: linear-gradient(90deg, var(--cyan), var(--purple));
+    border-radius: 4px;
+    box-shadow: 0 0 8px rgba(0,245,255,0.6);
+    animation: xpPulse 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes xpPulse {
+    from { box-shadow: 0 0 6px rgba(0,245,255,0.4); }
+    to { box-shadow: 0 0 14px rgba(0,245,255,0.9); }
+  }
+
+  .currency {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .currency.coins { color: var(--gold); }
+  .currency.gems { color: var(--purple); }
+
+  .currency-icon { font-size: 15px; }
+
+  /* SCREEN AREA */
+  .screen { flex: 1; overflow: hidden; position: relative; }
+
+  /* ── HOME SCREEN ── */
+  .home { display: flex; flex-direction: column; height: 100%; }
+
+  .container-hero {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 16px;
+  }
+
+  /* Glow rings */
+  .rings {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -60%);
+  }
+
+  .ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(0,245,255,0.08);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    animation: ringPulse 3s ease-in-out infinite alternate;
+  }
+
+  .ring:nth-child(1) { width: 200px; height: 200px; animation-delay: 0s; }
+  .ring:nth-child(2) { width: 260px; height: 260px; animation-delay: 0.5s; }
+  .ring:nth-child(3) { width: 320px; height: 320px; animation-delay: 1s; border-color: rgba(0,245,255,0.04); }
+
+  @keyframes ringPulse {
+    from { transform: translate(-50%, -50%) scale(0.95); }
+    to { transform: translate(-50%, -50%) scale(1.05); }
+  }
+
+  .container-box {
+    width: 160px;
+    height: 160px;
+    background: rgba(0,245,255,0.07);
+    border: 2px solid rgba(0,245,255,0.6);
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 80px;
+    box-shadow: 0 0 40px rgba(0,245,255,0.35), 0 0 80px rgba(0,245,255,0.15);
+    animation: containerFloat 3s ease-in-out infinite alternate;
+    cursor: pointer;
+    transition: transform 0.1s;
+    position: relative;
+    z-index: 2;
+  }
+
+  .container-box:active { transform: scale(0.95); }
+
+  @keyframes containerFloat {
+    from { transform: translateY(0px) scale(1); box-shadow: 0 0 30px rgba(0,245,255,0.3); }
+    to { transform: translateY(-8px) scale(1.03); box-shadow: 0 0 60px rgba(0,245,255,0.5); }
+  }
+
+  .container-name {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: var(--cyan);
+    text-shadow: 0 0 12px var(--cyan), 0 0 24px rgba(0,245,255,0.4);
+    margin-top: 16px;
+    position: relative; z-index: 2;
+  }
+
+  .container-desc {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+    position: relative; z-index: 2;
+  }
+
+  .rarity-pills {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    position: relative; z-index: 2;
+  }
+
+  .pill {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 9px;
+    font-weight: 700;
+    border: 1px solid;
+  }
+
+  .pill-common { color: var(--common); border-color: rgba(156,163,175,0.4); background: rgba(156,163,175,0.08); }
+  .pill-rare { color: var(--rare); border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.08); }
+  .pill-legendary { color: var(--legendary); border-color: rgba(255,215,0,0.4); background: rgba(255,215,0,0.08); }
+
+  /* Open button */
+  .open-btn {
+    margin: 0 24px 12px;
+    height: 58px;
+    border-radius: 16px;
+    background: linear-gradient(90deg, var(--cyan), var(--purple));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #000;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(0,245,255,0.4), 0 0 40px rgba(139,92,246,0.2);
+    animation: btnShimmer 2s linear infinite;
+    background-size: 200% 100%;
+    flex-shrink: 0;
+    transition: transform 0.1s, box-shadow 0.1s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .open-btn::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -60%;
+    width: 40%;
+    height: 200%;
+    background: rgba(255,255,255,0.2);
+    transform: skewX(-20deg);
+    animation: shimmer 2.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { left: -60%; }
+    100% { left: 130%; }
+  }
+
+  .open-btn:active { transform: scale(0.97); }
+
+  /* Container list */
+  .container-list {
+    height: 110px;
+    display: flex;
+    gap: 10px;
+    padding: 0 16px 16px;
+    overflow-x: auto;
+    flex-shrink: 0;
+    scrollbar-width: none;
+  }
+
+  .container-list::-webkit-scrollbar { display: none; }
+
+  .c-card {
+    min-width: 80px;
+    height: 90px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    font-size: 28px;
+  }
+
+  .c-card.active {
+    border-width: 2px;
+    background: rgba(0,245,255,0.1);
+  }
+
+  .c-card span.label {
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  .c-card span.price {
+    font-size: 7px;
+    color: var(--muted);
+  }
+
+  .c-card span.free-tag {
+    font-size: 7px;
+    font-weight: 700;
+    color: var(--green);
+    text-shadow: 0 0 6px var(--green);
+  }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    background: var(--nav);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding: 8px 0 16px;
+    flex-shrink: 0;
+  }
+
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    cursor: pointer;
+    padding: 4px 0;
+    transition: all 0.2s;
+  }
+
+  .nav-item .nav-icon { font-size: 20px; }
+  .nav-item .nav-label { font-size: 8px; font-weight: 700; color: var(--muted); letter-spacing: 0.3px; }
+  .nav-item.active .nav-label { color: var(--cyan); }
+  .nav-item.active .nav-icon { filter: drop-shadow(0 0 6px var(--cyan)); }
+
+  /* ── INVENTORY SCREEN ── */
+  .inventory-screen { display: none; flex-direction: column; height: 100%; }
+
+  .inv-header {
+    padding: 12px 16px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .inv-search {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px 14px 8px 36px;
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    width: 100%;
+    outline: none;
+    position: relative;
+  }
+
+  .inv-search:focus { border-color: var(--cyan); }
+
+  .search-wrap { position: relative; }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 14px; }
+
+  .chips { display: flex; gap: 6px; margin-top: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .chips::-webkit-scrollbar { display: none; }
+
+  .chip {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .chip.active {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    background: rgba(0,245,255,0.08);
+  }
+
+  .inv-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 12px;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+
+  .inv-grid::-webkit-scrollbar { display: none; }
+
+  .item-tile {
+    border-radius: 12px;
+    border: 1px solid rgba(59,130,246,0.4);
+    background: rgba(59,130,246,0.06);
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+    aspect-ratio: 3/4;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .item-tile:nth-child(3n+1) { border-color: rgba(255,215,0,0.5); background: rgba(255,215,0,0.06); }
+  .item-tile:nth-child(3n+2) { border-color: rgba(168,85,247,0.5); background: rgba(168,85,247,0.06); }
+  .item-tile:nth-child(5) { border-color: rgba(255,107,0,0.5); background: rgba(255,107,0,0.06); }
+  .item-tile:nth-child(7) { border-color: rgba(0,245,255,0.5); background: rgba(0,245,255,0.06); box-shadow: 0 0 12px rgba(0,245,255,0.2); }
+
+  .item-emoji { font-size: 30px; margin: auto 0; text-align: center; }
+  .item-mut { font-size: 7px; font-weight: 700; padding: 2px 5px; border-radius: 4px; width: fit-content; }
+  .item-mut.golden { background: rgba(255,215,0,0.2); color: var(--gold); }
+  .item-mut.void { background: rgba(139,92,246,0.3); color: var(--purple); }
+  .item-name { font-size: 8px; font-weight: 700; color: var(--text); line-height: 1.2; }
+  .item-val { font-size: 8px; color: var(--gold); font-weight: 600; }
+
+  .lock-icon { position: absolute; top: 5px; right: 5px; font-size: 10px; }
+
+  /* ── OPENING SCREEN ── */
+  .opening-screen {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 20px;
+  }
+
+  .roulette-wrap {
+    width: 100%;
+    position: relative;
+    height: 100px;
+    overflow: hidden;
+  }
+
+  .roulette-track {
+    display: flex;
+    gap: 6px;
+    position: absolute;
+    animation: rouletteScroll 3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+
+  @keyframes rouletteScroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-1400px); }
+  }
+
+  .roul-item {
+    min-width: 82px;
+    height: 90px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .roul-item span { font-size: 8px; font-weight: 700; }
+
+  .roulette-center {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    width: 88px;
+    height: 100%;
+    border: 2px solid var(--cyan);
+    border-radius: 14px;
+    box-shadow: 0 0 16px rgba(0,245,255,0.5);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .roulette-fade-l {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 80px;
+    background: linear-gradient(90deg, var(--bg), transparent);
+    z-index: 1;
+  }
+
+  .roulette-fade-r {
+    position: absolute; right: 0; top: 0; bottom: 0; width: 80px;
+    background: linear-gradient(-90deg, var(--bg), transparent);
+    z-index: 1;
+  }
+
+  .opening-title {
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--cyan);
+    text-shadow: 0 0 16px var(--cyan);
+    letter-spacing: 3px;
+    animation: blink 1s ease-in-out infinite alternate;
+  }
+
+  @keyframes blink {
+    from { opacity: 1; }
+    to { opacity: 0.6; }
+  }
+
+  /* ── REVEAL ── */
+  .reveal-screen {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px;
+  }
+
+  .reveal-card {
+    width: 260px;
+    background: var(--surface);
+    border-radius: 24px;
+    border: 2px solid var(--legendary);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 0 40px rgba(255,215,0,0.4), 0 0 80px rgba(255,215,0,0.15);
+    animation: revealPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  @keyframes revealPop {
+    from { transform: scale(0.3); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .reveal-rarity {
+    background: rgba(255,215,0,0.15);
+    border: 1px solid var(--legendary);
+    border-radius: 20px;
+    padding: 4px 16px;
+    font-size: 11px;
+    font-weight: 900;
+    color: var(--legendary);
+    text-shadow: 0 0 10px var(--legendary);
+    letter-spacing: 1px;
+  }
+
+  .reveal-emoji { font-size: 70px; animation: emojiFloat 1.5s ease-in-out infinite alternate; }
+
+  @keyframes emojiFloat {
+    from { transform: scale(1); }
+    to { transform: scale(1.08); }
+  }
+
+  .reveal-mutation {
+    background: linear-gradient(90deg, rgba(255,215,0,0.3), rgba(255,215,0,0.1));
+    border: 1px solid var(--gold);
+    border-radius: 10px;
+    padding: 3px 12px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--gold);
+  }
+
+  .reveal-name { font-size: 20px; font-weight: 800; color: var(--text); text-align: center; }
+  .reveal-cat { font-size: 11px; color: var(--muted); }
+
+  .reveal-value {
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--gold);
+    text-shadow: 0 0 10px rgba(255,215,0,0.6);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .reveal-actions { display: flex; gap: 14px; }
+
+  .rev-btn {
+    padding: 14px 22px;
+    border-radius: 14px;
+    border: 2px solid;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    transition: transform 0.1s;
+  }
+
+  .rev-btn:active { transform: scale(0.95); }
+  .rev-btn .rev-icon { font-size: 22px; }
+
+  .rev-btn.keep { border-color: var(--cyan); color: var(--cyan); background: rgba(0,245,255,0.08); }
+  .rev-btn.sell { border-color: var(--gold); color: var(--gold); background: rgba(255,215,0,0.08); }
+
+  /* particles */
+  .particles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; }
+
+  .particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    animation: particleFly 1.5s ease-out forwards;
+  }
+
+  @keyframes particleFly {
+    from { transform: translate(0, 0) scale(1); opacity: 1; }
+    to { opacity: 0; }
+  }
+
+  /* ── SCREEN SWITCHER ── */
+  .screen-home { display: flex; }
+  .screen-inventory { display: none; }
+  .screen-opening { display: none; }
+  .screen-reveal { display: none; }
+
+  /* Navigation labels */
+  .nav-icons { font-size: 18px; }
+
+  /* Scroll indicator */
+  .scroll-hint {
+    position: absolute;
+    bottom: 120px;
+    right: 20px;
+    background: rgba(0,245,255,0.1);
+    border: 1px solid var(--cyan);
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 10px;
+    color: var(--cyan);
+    animation: fadeInOut 2s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes fadeInOut {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 1; }
+  }
+
+  /* Upgrade screen */
+  .upgrades-screen { display: none; flex-direction: column; height: 100%; }
+
+  .upg-list { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; scrollbar-width: none; }
+  .upg-list::-webkit-scrollbar { display: none; }
+
+  .upg-card {
+    background: var(--surface);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .upg-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+
+  .upg-info { flex: 1; }
+  .upg-title { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+  .upg-lv { font-size: 9px; padding: 2px 6px; border-radius: 5px; font-weight: 700; }
+  .upg-desc { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .upg-effect { font-size: 10px; font-weight: 600; margin-top: 4px; }
+  .upg-bar { height: 4px; background: var(--border); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+  .upg-bar-fill { height: 100%; border-radius: 2px; }
+
+  .upg-btn {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    cursor: pointer;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    transition: transform 0.1s;
+    flex-shrink: 0;
+  }
+
+  .upg-btn:active { transform: scale(0.95); }
+  .upg-btn .arr { font-size: 16px; }
+
+  /* Screen title */
+  .screen-title {
+    padding: 14px 16px 10px;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  /* tab indicator */
+  .active-tab {
+    animation: tabGlow 1.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes tabGlow {
+    from { text-shadow: 0 0 4px var(--cyan); }
+    to { text-shadow: 0 0 12px var(--cyan); }
+  }
+</style>
+</head>
+<body>
+
+<div class="phone">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="level-badge">⭐ LVL 1</div>
+    <div class="xp-bar-wrap"><div class="xp-bar-fill"></div></div>
+    <div class="currency coins"><span class="currency-icon">🪙</span> 0</div>
+    <div class="currency gems"><span class="currency-icon">💎</span> 0</div>
+  </div>
+
+  <!-- SCREENS -->
+  <div class="screen">
+
+    <!-- HOME -->
+    <div class="home screen-home" id="screen-home">
+      <div class="container-hero">
+        <div class="rings">
+          <div class="ring"></div>
+          <div class="ring"></div>
+          <div class="ring"></div>
+        </div>
+
+        <div class="container-box" id="main-container" onclick="startOpening()">📦</div>
+
+        <div class="container-name" id="c-name">FREE CONTAINER</div>
+        <div class="container-desc" id="c-desc">Il tuo primo container. Buona fortuna!</div>
+
+        <div class="rarity-pills">
+          <div class="pill pill-common">COMUNE 70%</div>
+          <div class="pill pill-rare">RARO 7%</div>
+          <div class="pill pill-legendary">LEGGEND. 0.8%</div>
+        </div>
+      </div>
+
+      <div class="open-btn" onclick="startOpening()">
+        🔓 &nbsp; OPEN FREE
+      </div>
+
+      <div class="container-list">
+        <div class="c-card active" style="border-color:rgba(74,96,128,0.8);box-shadow:0 0 12px rgba(74,96,128,0.4);" onclick="selectContainer(this,'FREE','#4A6080','Il tuo primo container!','OPEN FREE')">
+          <span style="font-size:28px">📦</span>
+          <span class="label" style="color:#4A6080">FREE</span>
+          <span class="free-tag">GRATIS</span>
+        </div>
+        <div class="c-card" style="" onclick="selectContainer(this,'BASIC','#34D399','Oggetti quotidiani con qualche sorpresa.','OPEN · 100€')">
+          <span style="font-size:28px">📫</span>
+          <span class="label" style="color:#34D399">BASIC</span>
+          <span class="price">100€</span>
+        </div>
+        <div class="c-card" onclick="selectContainer(this,'INDUSTRIAL','#3B82F6','Strumenti pesanti e componenti industriali.','OPEN · 500€')">
+          <span style="font-size:28px">🏗️</span>
+          <span class="label" style="color:#3B82F6">INDUST.</span>
+          <span class="price">500€</span>
+        </div>
+        <div class="c-card" onclick="selectContainer(this,'MILITARY','#A855F7','Equipaggiamento tattico e tecnologia militare.','OPEN · 2.000€')">
+          <span style="font-size:28px">🪖</span>
+          <span class="label" style="color:#A855F7">MILITARY</span>
+          <span class="price">2K€</span>
+        </div>
+        <div class="c-card" onclick="selectContainer(this,'LUXURY','#FFD700','Gioielli, arte e oggetti di valore estremo.','OPEN · 10.000€')">
+          <span style="font-size:28px">👑</span>
+          <span class="label" style="color:#FFD700">LUXURY</span>
+          <span class="price">10K€</span>
+        </div>
+        <div class="c-card" onclick="selectContainer(this,'SPACE','#FF6B00','Tecnologia aliena e meteoriti preziosi.','OPEN · 100K€')">
+          <span style="font-size:28px">🛸</span>
+          <span class="label" style="color:#FF6B00">SPACE</span>
+          <span class="price">100K€</span>
+        </div>
+        <div class="c-card" onclick="selectContainer(this,'QUANTUM','#00F5FF','Oggetti che esistono oltre la realtà.','OPEN · 1M€')">
+          <span style="font-size:28px">⚛️</span>
+          <span class="label" style="color:#00F5FF">QUANTUM</span>
+          <span class="price">1M€</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- INVENTORY -->
+    <div class="inventory-screen screen-inventory" id="screen-inventory">
+      <div class="screen-title">INVENTARIO (7/50)</div>
+      <div class="inv-header">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input class="inv-search" placeholder="Cerca oggetti...">
+        </div>
+        <div class="chips">
+          <div class="chip active">Più recenti</div>
+          <div class="chip">Valore ↓</div>
+          <div class="chip">Rarità ↓</div>
+          <div class="chip">Valore ↑</div>
+        </div>
+      </div>
+      <div class="inv-grid">
+        <div class="item-tile" style="border-color:rgba(255,215,0,0.6);background:rgba(255,215,0,0.08);box-shadow:0 0 10px rgba(255,215,0,0.2)">
+          <div class="item-emoji">🏆</div>
+          <div class="item-mut golden">✦ GOLDEN</div>
+          <div class="item-name">Coppa d'Oro</div>
+          <div class="item-val">2.1M€</div>
+          <div class="lock-icon">🔒</div>
+        </div>
+        <div class="item-tile" style="border-color:rgba(168,85,247,0.6);background:rgba(168,85,247,0.08)">
+          <div class="item-emoji">💎</div>
+          <div class="item-name">Diamante Raro</div>
+          <div class="item-val">85K€</div>
+        </div>
+        <div class="item-tile" style="border-color:rgba(0,245,255,0.6);background:rgba(0,245,255,0.08);box-shadow:0 0 12px rgba(0,245,255,0.25)">
+          <div class="item-emoji">⚛️</div>
+          <div class="item-mut void">✦ VOID</div>
+          <div class="item-name">Ω Omega Particle</div>
+          <div class="item-val">250T€</div>
+        </div>
+        <div class="item-tile" style="border-color:rgba(59,130,246,0.5);background:rgba(59,130,246,0.06)">
+          <div class="item-emoji">⌚</div>
+          <div class="item-name">Orologio Vintage</div>
+          <div class="item-val">350€</div>
+        </div>
+        <div class="item-tile" style="border-color:rgba(255,107,0,0.5);background:rgba(255,107,0,0.06)">
+          <div class="item-emoji">🤖</div>
+          <div class="item-name">Prototipo Robot</div>
+          <div class="item-val">20K€</div>
+        </div>
+        <div class="item-tile" style="border-color:rgba(156,163,175,0.3);background:rgba(156,163,175,0.04)">
+          <div class="item-emoji">🔧</div>
+          <div class="item-name">Chiave Inglese</div>
+          <div class="item-val">25€</div>
+        </div>
+        <div class="item-tile" style="border-color:rgba(52,211,153,0.4);background:rgba(52,211,153,0.06)">
+          <div class="item-emoji">📱</div>
+          <div class="item-name">Smartphone Vecchio</div>
+          <div class="item-val">120€</div>
+        </div>
+        <div class="item-tile" style="border-color:rgba(255,215,0,0.4);background:rgba(255,215,0,0.05)">
+          <div class="item-emoji">🏺</div>
+          <div class="item-name">Vaso Ming</div>
+          <div class="item-val">8K€</div>
+        </div>
+        <div class="item-tile" style="border-color:rgba(156,163,175,0.3);background:rgba(156,163,175,0.04)">
+          <div class="item-emoji">🔩</div>
+          <div class="item-name">Bullone Arrugginito</div>
+          <div class="item-val">5€</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPENING -->
+    <div class="opening-screen screen-opening" id="screen-opening">
+      <div class="opening-title">OPENING...</div>
+      <div class="roulette-wrap">
+        <div class="roulette-fade-l"></div>
+        <div class="roulette-center"></div>
+        <div class="roulette-fade-r"></div>
+        <div class="roulette-track" id="roulette-track">
+          <div class="roul-item" style="background:rgba(156,163,175,0.1);border:1px solid rgba(156,163,175,0.3)"><span>🔩</span><span style="color:#9CA3AF">COMUNE</span></div>
+          <div class="roul-item" style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3)"><span>🔧</span><span style="color:#34D399">NON COM.</span></div>
+          <div class="roul-item" style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3)"><span>⌚</span><span style="color:#3B82F6">RARO</span></div>
+          <div class="roul-item" style="background:rgba(156,163,175,0.1);border:1px solid rgba(156,163,175,0.3)"><span>🍶</span><span style="color:#9CA3AF">COMUNE</span></div>
+          <div class="roul-item" style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3)"><span>🪙</span><span style="color:#A855F7">EPICO</span></div>
+          <div class="roul-item" style="background:rgba(156,163,175,0.1);border:1px solid rgba(156,163,175,0.3)"><span>🔩</span><span style="color:#9CA3AF">COMUNE</span></div>
+          <div class="roul-item" style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3)"><span>📱</span><span style="color:#34D399">NON COM.</span></div>
+          <div class="roul-item" style="background:rgba(255,215,0,0.15);border:2px solid rgba(255,215,0,0.7);box-shadow:0 0 12px rgba(255,215,0,0.4)"><span>🏆</span><span style="color:#FFD700">LEGGEND.</span></div>
+          <div class="roul-item" style="background:rgba(156,163,175,0.1);border:1px solid rgba(156,163,175,0.3)"><span>🔧</span><span style="color:#9CA3AF">COMUNE</span></div>
+          <div class="roul-item" style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3)"><span>⌚</span><span style="color:#3B82F6">RARO</span></div>
+          <div class="roul-item" style="background:rgba(156,163,175,0.1);border:1px solid rgba(156,163,175,0.3)"><span>🍶</span><span style="color:#9CA3AF">COMUNE</span></div>
+          <div class="roul-item" style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3)"><span>🔩</span><span style="color:#34D399">NON COM.</span></div>
+          <div class="roul-item" style="background:rgba(156,163,175,0.1);border:1px solid rgba(156,163,175,0.3)"><span>🔧</span><span style="color:#9CA3AF">COMUNE</span></div>
+          <div class="roul-item" style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3)"><span>💎</span><span style="color:#A855F7">EPICO</span></div>
+          <div class="roul-item" style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3)"><span>📱</span><span style="color:#3B82F6">RARO</span></div>
+          <div class="roul-item" style="background:rgba(156,163,175,0.1);border:1px solid rgba(156,163,175,0.3)"><span>🔩</span><span style="color:#9CA3AF">COMUNE</span></div>
+        </div>
+      </div>
+      <div style="color:var(--muted);font-size:13px">Sei fortunato?</div>
+    </div>
+
+    <!-- REVEAL -->
+    <div class="reveal-screen screen-reveal" id="screen-reveal">
+      <div style="position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px">
+        <div class="particles" id="particles"></div>
+        <div class="reveal-card">
+          <div class="reveal-rarity">✦ LEGGENDARIO</div>
+          <div class="reveal-emoji">🏆</div>
+          <div class="reveal-mutation">✦ GOLDEN ×3</div>
+          <div class="reveal-name">Coppa d'Oro Antica</div>
+          <div class="reveal-cat">Collezionabili</div>
+          <div class="reveal-value">🪙 2.100.000€</div>
+        </div>
+        <div class="reveal-actions">
+          <div class="rev-btn keep" onclick="keepItem()">
+            <span class="rev-icon">📦</span>
+            TIENI
+          </div>
+          <div class="rev-btn sell" onclick="sellItem()">
+            <span class="rev-icon">💰</span>
+            VENDI<br>+2.1M€
+          </div>
+        </div>
+        <div onclick="openAnother()" style="color:var(--muted);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px">
+          🔄 Apri un altro
+        </div>
+      </div>
+    </div>
+
+    <!-- UPGRADES -->
+    <div class="upgrades-screen screen-upgrades" id="screen-upgrades">
+      <div class="screen-title">POTENZIAMENTI</div>
+      <div class="upg-list">
+
+        <div class="upg-card" style="border-color:rgba(255,215,0,0.3)">
+          <div class="upg-icon" style="background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.3)">⭐</div>
+          <div class="upg-info">
+            <div class="upg-title" style="color:#FFD700">FORTUNA <span class="upg-lv" style="background:rgba(255,215,0,0.15);color:#FFD700">LV 0</span></div>
+            <div class="upg-desc">Aumenta la possibilità di trovare oggetti rari</div>
+            <div class="upg-effect" style="color:#FFD700">+0% rarità</div>
+            <div class="upg-bar"><div class="upg-bar-fill" style="width:0%;background:#FFD700"></div></div>
+          </div>
+          <div class="upg-btn" style="border-color:#FFD700;color:#FFD700;background:rgba(255,215,0,0.1)">
+            <span class="arr">⬆️</span>
+            <span style="color:#FFD700">500€</span>
+          </div>
+        </div>
+
+        <div class="upg-card" style="border-color:rgba(0,245,255,0.3)">
+          <div class="upg-icon" style="background:rgba(0,245,255,0.12);border:1px solid rgba(0,245,255,0.3)">⚡</div>
+          <div class="upg-info">
+            <div class="upg-title" style="color:#00F5FF">VELOCITÀ <span class="upg-lv" style="background:rgba(0,245,255,0.15);color:#00F5FF">LV 2</span></div>
+            <div class="upg-desc">Riduce il tempo di apertura container</div>
+            <div class="upg-effect" style="color:#00F5FF">-20% tempo</div>
+            <div class="upg-bar"><div class="upg-bar-fill" style="width:20%;background:#00F5FF"></div></div>
+          </div>
+          <div class="upg-btn" style="border-color:#00F5FF;color:#00F5FF;background:rgba(0,245,255,0.1)">
+            <span class="arr">⬆️</span>
+            <span style="color:#FFD700">900€</span>
+          </div>
+        </div>
+
+        <div class="upg-card" style="border-color:rgba(255,215,0,0.3)">
+          <div class="upg-icon" style="background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.3)">📈</div>
+          <div class="upg-info">
+            <div class="upg-title" style="color:#FFD700">VALUE BOOST <span class="upg-lv" style="background:rgba(255,215,0,0.15);color:#FFD700">LV 0</span></div>
+            <div class="upg-desc">Aumenta il prezzo di vendita di tutti gli oggetti</div>
+            <div class="upg-effect" style="color:#FFD700">+0% valore</div>
+            <div class="upg-bar"><div class="upg-bar-fill" style="width:0%;background:#FFD700"></div></div>
+          </div>
+          <div class="upg-btn" style="border-color:#FFD700;color:#FFD700;background:rgba(255,215,0,0.1)">
+            <span class="arr">⬆️</span>
+            <span style="color:#FFD700">800€</span>
+          </div>
+        </div>
+
+        <div class="upg-card" style="border-color:rgba(139,92,246,0.3)">
+          <div class="upg-icon" style="background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.3)">📦</div>
+          <div class="upg-info">
+            <div class="upg-title" style="color:#8B5CF6">SLOT INVENTARIO <span class="upg-lv" style="background:rgba(139,92,246,0.15);color:#8B5CF6">LV 0</span></div>
+            <div class="upg-desc">Aumenta la capienza del tuo inventario</div>
+            <div class="upg-effect" style="color:#8B5CF6">50 slot totali</div>
+            <div class="upg-bar"><div class="upg-bar-fill" style="width:0%;background:#8B5CF6"></div></div>
+          </div>
+          <div class="upg-btn" style="border-color:#8B5CF6;color:#8B5CF6;background:rgba(139,92,246,0.1)">
+            <span class="arr">⬆️</span>
+            <span style="color:#FFD700">200€</span>
+          </div>
+        </div>
+
+        <div class="upg-card" style="border-color:rgba(57,255,20,0.3)">
+          <div class="upg-icon" style="background:rgba(57,255,20,0.1);border:1px solid rgba(57,255,20,0.3)">🔄</div>
+          <div class="upg-info">
+            <div class="upg-title" style="color:#39FF14">AUTO OPEN <span class="upg-lv" style="background:rgba(57,255,20,0.1);color:#39FF14">LV 0</span></div>
+            <div class="upg-desc">Apre automaticamente i container</div>
+            <div class="upg-effect" style="color:#39FF14">0 container/sec</div>
+            <div class="upg-bar"><div class="upg-bar-fill" style="width:0%;background:#39FF14"></div></div>
+          </div>
+          <div class="upg-btn" style="border-color:#39FF14;color:#39FF14;background:rgba(57,255,20,0.08)">
+            <span class="arr">⬆️</span>
+            <span style="color:#FFD700">5K€</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="nav-item active" id="nav-home" onclick="showScreen('home')">
+      <div class="nav-icon active-tab">🏠</div>
+      <div class="nav-label" style="color:var(--cyan)">Home</div>
+    </div>
+    <div class="nav-item" id="nav-inventory" onclick="showScreen('inventory')">
+      <div class="nav-icon">📦</div>
+      <div class="nav-label">Inventory</div>
+    </div>
+    <div class="nav-item" onclick="showScreen('shop')">
+      <div class="nav-icon">🛒</div>
+      <div class="nav-label">Shop</div>
+    </div>
+    <div class="nav-item" id="nav-upgrades" onclick="showScreen('upgrades')">
+      <div class="nav-icon">⬆️</div>
+      <div class="nav-label">Upgrades</div>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon">📋</div>
+      <div class="nav-label">Missions</div>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon">📚</div>
+      <div class="nav-label">Collection</div>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon">🏆</div>
+      <div class="nav-label">Ranking</div>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon">👤</div>
+      <div class="nav-label">Profile</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let coins = 0;
+  let gems = 0;
+  let level = 1;
+  let xp = 0;
+  let currentScreen = 'home';
+
+  const containerData = {
+    'FREE':       { emoji:'📦', color:'#4A6080', desc:'Il tuo primo container. Buona fortuna!', btn:'OPEN FREE', cost:0 },
+    'BASIC':      { emoji:'📫', color:'#34D399', desc:'Oggetti quotidiani con qualche sorpresa.', btn:'OPEN · 100€', cost:100 },
+    'INDUSTRIAL': { emoji:'🏗️', color:'#3B82F6', desc:'Strumenti pesanti e componenti industriali.', btn:'OPEN · 500€', cost:500 },
+    'MILITARY':   { emoji:'🪖', color:'#A855F7', desc:'Equipaggiamento tattico e tecnologia militare.', btn:'OPEN · 2.000€', cost:2000 },
+    'LUXURY':     { emoji:'👑', color:'#FFD700', desc:'Gioielli, arte e oggetti di valore estremo.', btn:'OPEN · 10.000€', cost:10000 },
+    'SPACE':      { emoji:'🛸', color:'#FF6B00', desc:'Tecnologia aliena e meteoriti preziosi.', btn:'OPEN · 100K€', cost:100000 },
+    'QUANTUM':    { emoji:'⚛️', color:'#00F5FF', desc:'Oggetti che esistono oltre la realtà.', btn:'OPEN · 1M€', cost:1000000 },
+  };
+
+  let activeContainer = 'FREE';
+
+  function selectContainer(el, name, color, desc, btnText) {
+    document.querySelectorAll('.c-card').forEach(c => {
+      c.classList.remove('active');
+      c.style.boxShadow = '';
+    });
+    el.classList.add('active');
+    el.style.boxShadow = `0 0 14px ${color}70`;
+    el.style.borderColor = color;
+    el.style.background = `${color}18`;
+
+    const data = containerData[name];
+    document.getElementById('main-container').textContent = data.emoji;
+    document.getElementById('main-container').style.borderColor = `${color}99`;
+    document.getElementById('main-container').style.boxShadow = `0 0 40px ${color}55, 0 0 80px ${color}25`;
+    document.getElementById('c-name').textContent = name + ' CONTAINER';
+    document.getElementById('c-name').style.color = color;
+    document.getElementById('c-name').style.textShadow = `0 0 12px ${color}`;
+    document.getElementById('c-desc').textContent = desc;
+    document.querySelector('.open-btn').innerHTML = `🔓 &nbsp; ${btnText}`;
+    activeContainer = name;
+  }
+
+  function showScreen(name) {
+    document.querySelectorAll('[class*="screen-"]').forEach(s => s.style.display = 'none');
+    document.querySelectorAll('.nav-item').forEach(n => {
+      n.classList.remove('active');
+      n.querySelector('.nav-label').style.color = 'var(--muted)';
+      n.querySelector('.nav-icon').classList.remove('active-tab');
+    });
+
+    const screens = {
+      home: 'screen-home',
+      inventory: 'screen-inventory',
+      upgrades: 'screen-upgrades',
+    };
+
+    const el = document.getElementById(`screen-${name}`);
+    if (el) {
+      el.style.display = 'flex';
+    }
+
+    const navEl = document.getElementById(`nav-${name}`);
+    if (navEl) {
+      navEl.classList.add('active');
+      navEl.querySelector('.nav-label').style.color = 'var(--cyan)';
+      navEl.querySelector('.nav-icon').classList.add('active-tab');
+    }
+    currentScreen = name;
+  }
+
+  function startOpening() {
+    document.querySelectorAll('[class*="screen-"]').forEach(s => s.style.display = 'none');
+    document.getElementById('screen-opening').style.display = 'flex';
+
+    // Reset roulette
+    const track = document.getElementById('roulette-track');
+    track.style.animation = 'none';
+    track.offsetHeight; // reflow
+    track.style.animation = 'rouletteScroll 3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards';
+
+    setTimeout(() => {
+      showReveal();
+    }, 3200);
+  }
+
+  function showReveal() {
+    document.querySelectorAll('[class*="screen-"]').forEach(s => s.style.display = 'none');
+    document.getElementById('screen-reveal').style.display = 'flex';
+    spawnParticles();
+  }
+
+  function spawnParticles() {
+    const container = document.getElementById('particles');
+    container.innerHTML = '';
+    const colors = ['#FFD700','#FF6B00','#00F5FF','#8B5CF6','#FF0080'];
+    for (let i = 0; i < 40; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.background = colors[Math.floor(Math.random() * colors.length)];
+      p.style.left = '50%';
+      p.style.top = '40%';
+      const angle = Math.random() * 360;
+      const distance = 80 + Math.random() * 150;
+      const dx = Math.cos(angle * Math.PI / 180) * distance;
+      const dy = Math.sin(angle * Math.PI / 180) * distance;
+      p.style.setProperty('--dx', dx + 'px');
+      p.style.setProperty('--dy', dy + 'px');
+      p.style.animation = `none`;
+      p.style.transform = `translate(${dx}px, ${dy}px)`;
+      p.style.opacity = '0';
+      p.style.transition = `transform ${0.5 + Math.random() * 0.5}s ease-out, opacity 1s ease-out ${0.3 + Math.random() * 0.5}s`;
+      container.appendChild(p);
+      setTimeout(() => { p.style.opacity = '0.8'; }, 10);
+      setTimeout(() => { p.style.opacity = '0'; }, 800);
+    }
+  }
+
+  function keepItem() {
+    coins += 0;
+    updateUI();
+    // Add XP
+    xp += 30;
+    if (xp >= 100) { xp -= 100; level++; }
+    updateUI();
+    showScreen('home');
+  }
+
+  function sellItem() {
+    coins += 2100000;
+    xp += 30;
+    if (xp >= 100) { xp -= 100; level++; }
+    updateUI();
+    showScreen('home');
+  }
+
+  function openAnother() {
+    startOpening();
+  }
+
+  function updateUI() {
+    document.querySelector('.currency.coins').innerHTML = `<span class="currency-icon">🪙</span> ${formatNum(coins)}`;
+    document.querySelector('.level-badge').innerHTML = `⭐ LVL ${level}`;
+    document.querySelector('.xp-bar-fill').style.width = `${(xp / 100) * 100}%`;
+  }
+
+  function formatNum(n) {
+    if (n >= 1e12) return (n/1e12).toFixed(1)+'T';
+    if (n >= 1e9) return (n/1e9).toFixed(1)+'B';
+    if (n >= 1e6) return (n/1e6).toFixed(1)+'M';
+    if (n >= 1e3) return (n/1e3).toFixed(1)+'K';
+    return n.toString();
+  }
+
+  // Init
+  showScreen('home');
+</script>
+</body>
+</html>
