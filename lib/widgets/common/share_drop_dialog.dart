@@ -107,7 +107,7 @@ $emoji ${widget.item.name.toUpperCase()} $emoji
 ${widget.item.rarity.displayName}$mutationLine
 
 📊 Probabilità: $dropRate
-💰 Valore: $value€
+💰 Valore: 🪙 $value
 
 📦 Container Empire
 Apri i tuoi container adesso!''';
@@ -296,7 +296,7 @@ Apri i tuoi container adesso!''';
 
                 // Value
                 Text(
-                  '💰 ${_fmt(widget.item.finalValue)}€',
+                  '💰 🪙 ${_fmt(widget.item.finalValue)}',
                   style: TextStyle(
                     color: AppColors.coins,
                     fontSize: 16,

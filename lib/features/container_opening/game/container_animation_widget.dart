@@ -110,7 +110,8 @@ class _ContainerAnimationWidgetState extends State<ContainerAnimationWidget>
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox.expand(
+      child: ColoredBox(
       color: AppColors.background,
       child: Stack(
         alignment: Alignment.center,
@@ -195,6 +196,7 @@ class _ContainerAnimationWidgetState extends State<ContainerAnimationWidget>
             ),
           ),
         ],
+      ),
       ),
     );
   }

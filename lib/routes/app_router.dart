@@ -9,6 +9,7 @@ import '../features/missions/screens/missions_screen.dart';
 import '../features/trade/screens/trade_screen.dart';
 import '../features/clan/screens/clan_screen.dart';
 import '../features/leaderboard/screens/leaderboard_screen.dart';
+import '../features/crafting/screens/crafting_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../widgets/common/main_shell.dart';
 
@@ -27,6 +28,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/trade',       builder: (_, __) => const TradeScreen()),
           GoRoute(path: '/clan',        builder: (_, __) => const ClanScreen()),
           GoRoute(path: '/leaderboard', builder: (_, __) => const LeaderboardScreen()),
+          GoRoute(path: '/crafting',    builder: (_, __) => const CraftingScreen()),
           GoRoute(path: '/profile',     builder: (_, __) => const ProfileScreen()),
         ],
       ),

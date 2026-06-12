@@ -131,6 +131,17 @@ class _TradeScreenState extends ConsumerState<TradeScreen> with SingleTickerProv
                       fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 2,
                       shadows: [Shadow(color: Color(0xFFFFD700), blurRadius: 12)],
                     )),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.neonPurple.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: AppColors.neonPurple.withOpacity(0.4)),
+                      ),
+                      child: const Text('P2P', style: TextStyle(
+                        color: AppColors.neonPurple, fontSize: 9, fontWeight: FontWeight.w900)),
+                    ),
                     const Spacer(),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -405,7 +416,7 @@ class _OfferCard extends StatelessWidget {
                     Text(timeAgo, style: const TextStyle(color: AppColors.textMuted, fontSize: 11)),
                   ]),
                   const SizedBox(height: 5),
-                  Text('Valore: ${_fmt(offer.itemValue)}€', style: const TextStyle(
+                  Text('Valore: 🪙 ${_fmt(offer.itemValue)}', style: const TextStyle(
                     color: AppColors.textMuted, fontSize: 10)),
                 ],
               ),
@@ -580,7 +591,7 @@ class _MyOffersTab extends StatelessWidget {
                 color: AppColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 13)),
               const SizedBox(height: 3),
               Text(
-                o.priceType == TradeType.gems ? '💎 ${o.priceGems} gemme' : '🪙 ${_fmt(o.priceCoins)}€',
+                o.priceType == TradeType.gems ? '💎 ${o.priceGems} gemme' : '🪙 ${_fmt(o.priceCoins)}',
                 style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
               ),
             ])),
@@ -691,7 +702,7 @@ class _CreateTradeTabState extends ConsumerState<_CreateTradeTab> {
                         style: TextStyle(color: color, fontSize: 8, fontWeight: FontWeight.w700),
                         overflow: TextOverflow.ellipsis, maxLines: 2),
                     ),
-                    Text(_fmt(item.finalValue) + '€',
+                    Text('🪙 ${_fmt(item.finalValue)}',
                       style: const TextStyle(color: AppColors.textMuted, fontSize: 8)),
                   ]),
                 ),
@@ -743,7 +754,7 @@ class _CreateTradeTabState extends ConsumerState<_CreateTradeTab> {
               const SizedBox(height: 4),
               _RarityChip(item.rarityKey),
               const SizedBox(height: 3),
-              Text('Valore: ${_fmt(item.finalValue)}€', style: const TextStyle(
+              Text('Valore: 🪙 ${_fmt(item.finalValue)}', style: const TextStyle(
                 color: AppColors.textMuted, fontSize: 11)),
             ])),
           ]),
@@ -800,9 +811,20 @@ class _CreateTradeTabState extends ConsumerState<_CreateTradeTab> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Valore stimato: ${_fmt(item.finalValue)}€  ·  Suggerito: ${_fmt(item.finalValue * 0.75)}€',
+          'Valore stimato: 🪙 ${_fmt(item.finalValue)}  ·  Suggerito: 🪙 ${_fmt(item.finalValue * 0.75)}',
           style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
         ),
+        const SizedBox(height: 4),
+        Row(children: [
+          const Icon(Icons.info_outline, size: 12, color: AppColors.neonOrange),
+          const SizedBox(width: 4),
+          Text(
+            _priceType == TradeType.coins
+                ? 'Minimo: 🪙 ${_fmt(item.finalValue * 0.50)} (50% del valore)'
+                : 'Minimo: ${(item.finalValue / 10000).ceil().clamp(1, 999999)} 💎',
+            style: const TextStyle(color: AppColors.neonOrange, fontSize: 10),
+          ),
+        ]),
         const SizedBox(height: 24),
 
         // Post button
@@ -818,6 +840,27 @@ class _CreateTradeTabState extends ConsumerState<_CreateTradeTab> {
                   backgroundColor: AppColors.error,
                 ));
                 return;
+              }
+              final item = _selectedItem!;
+              if (_priceType == TradeType.coins) {
+                final minCoins = item.finalValue * 0.50;
+                if (val < minCoins) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(
+                      '❌ Prezzo troppo basso! Minimo 🪙 ${_fmt(minCoins)} (50% del valore)'),
+                    backgroundColor: AppColors.error,
+                  ));
+                  return;
+                }
+              } else if (_priceType == TradeType.gems) {
+                final minGems = (item.finalValue / 10000).ceil().clamp(1, 999999);
+                if (val.toInt() < minGems) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text('❌ Minimo $minGems 💎 per questo item'),
+                    backgroundColor: AppColors.error,
+                  ));
+                  return;
+                }
               }
               final player = sl<PlayerService>().localPlayer;
               widget.onPost(TradeOffer(
@@ -962,7 +1005,7 @@ class _BuyConfirmDialog extends StatelessWidget {
                 Text(
                   offer.priceType == TradeType.gems
                       ? '💎 ${offer.priceGems}'
-                      : '🪙 ${_fmt(offer.priceCoins)}€',
+                      : '🪙 ${_fmt(offer.priceCoins)}',
                   style: const TextStyle(color: AppColors.textPrimary,
                       fontWeight: FontWeight.w900, fontSize: 16)),
               ]),

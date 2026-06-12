@@ -93,7 +93,6 @@ final List<ContainerModel> containerCatalog = [
     iconAsset: 'assets/images/container_industrial.png',
     animationAsset: 'assets/animations/container_industrial.json',
     lootTable: _buildLootTable('industrial'),
-    levelRequired: 5,
   ),
   // MILITARY — costo 2K€, jackpot normale ~60K, jackpot void ~15M
   ContainerModel(
@@ -105,7 +104,6 @@ final List<ContainerModel> containerCatalog = [
     iconAsset: 'assets/images/container_military.png',
     animationAsset: 'assets/animations/container_military.json',
     lootTable: _buildLootTable('military'),
-    levelRequired: 15,
   ),
   // LUXURY — costo 10K€, jackpot normale ~500K, jackpot void ~100M
   ContainerModel(
@@ -117,7 +115,6 @@ final List<ContainerModel> containerCatalog = [
     iconAsset: 'assets/images/container_luxury.png',
     animationAsset: 'assets/animations/container_luxury.json',
     lootTable: _buildLootTable('luxury'),
-    levelRequired: 30,
   ),
   // SPACE — costo 100K€, jackpot normale ~5M, jackpot void ~1B
   ContainerModel(
@@ -129,7 +126,6 @@ final List<ContainerModel> containerCatalog = [
     iconAsset: 'assets/images/container_space.png',
     animationAsset: 'assets/animations/container_space.json',
     lootTable: _buildLootTable('space'),
-    levelRequired: 60,
   ),
   // QUANTUM — costo 1M€, jackpot normale ~200M, jackpot void ~50B
   ContainerModel(
@@ -141,7 +137,6 @@ final List<ContainerModel> containerCatalog = [
     iconAsset: 'assets/images/container_quantum.png',
     animationAsset: 'assets/animations/container_quantum.json',
     lootTable: _buildLootTable('quantum'),
-    levelRequired: 100,
   ),
 ];
 

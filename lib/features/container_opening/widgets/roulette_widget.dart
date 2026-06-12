@@ -25,6 +25,15 @@ const _itemEmojis = {
   'Ω Omega Particle': '⚛️',
 };
 
+// Colore e label per ogni mutazione
+const _mutationData = {
+  'golden':        (label: '✨ GOLDEN',      color: Color(0xFFFFD700)),
+  'diamond':       (label: '💎 DIAMOND',     color: Color(0xFF00F5FF)),
+  'radioactive':   (label: '☢️ RADIO',       color: Color(0xFF39FF14)),
+  'galaxy':        (label: '🌌 GALAXY',      color: Color(0xFFBF5FFF)),
+  'voidMutation':  (label: '🕳️ VOID',        color: Color(0xFFFF0080)),
+};
+
 class RouletteWidget extends StatefulWidget {
   final ContainerModel container;
   final ItemModel? revealedItem;
@@ -40,12 +49,12 @@ class _RouletteWidgetState extends State<RouletteWidget>
   late Animation<double> _anim;
   late List<_RoulEntry> _entries;
 
-  static const _itemW    = 90.0;
-  static const _itemH    = 104.0;
-  static const _gap      = 8.0;
-  static const _totalW   = _itemW + _gap;
-  static const _count    = 32;       // total items in strip
-  static const _landIdx  = 16;       // which index stops at center
+  static const _itemW   = 90.0;
+  static const _itemH   = 110.0;
+  static const _gap     = 8.0;
+  static const _totalW  = _itemW + _gap;
+  static const _count   = 60;
+  static const _landIdx = 48;
 
   @override
   void initState() {
@@ -53,9 +62,9 @@ class _RouletteWidgetState extends State<RouletteWidget>
     _buildEntries();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1800),
+      duration: const Duration(milliseconds: 5000),
     );
-    _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutQuart);
+    _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutQuint);
     _ctrl.forward();
   }
 
@@ -69,6 +78,7 @@ class _RouletteWidgetState extends State<RouletteWidget>
           name: r.name,
           emoji: _itemEmojis[r.name] ?? '📦',
           rarityKey: r.rarityKey,
+          mutationKey: r.mutationKey,
         );
       }
       final e = loot[rng.nextInt(loot.length)];
@@ -76,6 +86,7 @@ class _RouletteWidgetState extends State<RouletteWidget>
         name: e.itemName,
         emoji: _itemEmojis[e.itemName] ?? '📦',
         rarityKey: e.rarity.name,
+        mutationKey: 'none',
       );
     });
   }
@@ -88,174 +99,221 @@ class _RouletteWidgetState extends State<RouletteWidget>
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (ctx, constraints) {
-      final w = constraints.maxWidth;
-      // How much the strip must scroll so _landIdx is at center
-      // Strip starts with item-0 at center: left = w/2 - _itemW/2
-      // Final: item-_landIdx at center → shift left by _landIdx * _totalW
-      final scrollAmount = _landIdx * _totalW;
+    // Schermo intero — niente AppBar durante la roulette
+    return Material(
+      color: AppColors.background,
+      child: SafeArea(
+        child: LayoutBuilder(builder: (ctx, constraints) {
+          final w = constraints.maxWidth;
+          final scrollAmount = _landIdx * _totalW;
 
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Title
-          const Text(
-            'OPENING...',
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w900,
-              color: AppColors.neonCyan,
-              letterSpacing: 4,
-              shadows: [Shadow(color: AppColors.neonCyan, blurRadius: 16)],
-            ),
-          ).animate(onPlay: (c) => c.repeat(reverse: true))
-            .fade(begin: 1.0, end: 0.4, duration: 600.ms),
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Spacer(),
 
-          const SizedBox(height: 28),
+              // ── Titolo ──────────────────────────────────────────
+              const Text(
+                'OPENING...',
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.neonCyan,
+                  letterSpacing: 4,
+                  shadows: [Shadow(color: AppColors.neonCyan, blurRadius: 20)],
+                ),
+              ).animate(onPlay: (c) => c.repeat(reverse: true))
+                .fade(begin: 1.0, end: 0.4, duration: 600.ms),
 
-          // Strip container
-          SizedBox(
-            width: w,
-            height: _itemH + 16,
-            child: ClipRect(
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // ── Scrolling row ──────────────────────────────
-                  AnimatedBuilder(
-                    animation: _anim,
-                    builder: (_, __) {
-                      // Initial left edge so item-0 is at center
-                      final initialLeft = w / 2 - _itemW / 2;
-                      // Shift left as animation progresses
-                      final currentLeft = initialLeft - _anim.value * scrollAmount;
+              const SizedBox(height: 40),
 
-                      return Positioned(
-                        left: currentLeft,
-                        top: 8,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: _entries.map((e) {
-                            final color = AppColors.rarityColor(e.rarityKey);
-                            return Container(
-                              width: _itemW,
-                              height: _itemH,
-                              margin: const EdgeInsets.only(right: _gap),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(14),
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    color.withOpacity(0.22),
-                                    color.withOpacity(0.05),
-                                  ],
-                                ),
-                                border: Border.all(color: color.withOpacity(0.55), width: 1),
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(e.emoji, style: const TextStyle(fontSize: 30)),
-                                  const SizedBox(height: 5),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                                    child: Text(
-                                      e.name.length > 13
-                                          ? '${e.name.substring(0, 12)}…'
-                                          : e.name,
-                                      style: TextStyle(
-                                        color: color,
-                                        fontSize: 8,
-                                        fontWeight: FontWeight.w700,
-                                        height: 1.2,
+              // ── Striscia ────────────────────────────────────────
+              SizedBox(
+                width: w,
+                height: _itemH + 20,
+                child: ClipRect(
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Scrolling row
+                      AnimatedBuilder(
+                        animation: _anim,
+                        builder: (_, __) {
+                          final initialLeft = w / 2 - _itemW / 2;
+                          final currentLeft = initialLeft - _anim.value * scrollAmount;
+                          return Positioned(
+                            left: currentLeft,
+                            top: 10,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: _entries.map((e) {
+                                final color = AppColors.rarityColor(e.rarityKey);
+                                final mutData = _mutationData[e.mutationKey];
+                                return Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    Container(
+                                      width: _itemW,
+                                      height: _itemH,
+                                      margin: const EdgeInsets.only(right: _gap),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(14),
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            color.withOpacity(0.12),
+                                            color.withOpacity(0.03),
+                                          ],
+                                        ),
+                                        border: Border.all(
+                                          color: mutData != null
+                                              ? mutData.color.withOpacity(0.6)
+                                              : color.withOpacity(0.25),
+                                          width: 1,
+                                        ),
+                                        boxShadow: mutData != null
+                                            ? [BoxShadow(
+                                                color: mutData.color.withOpacity(0.5),
+                                                blurRadius: 14,
+                                              )]
+                                            : null,
                                       ),
-                                      textAlign: TextAlign.center,
-                                      maxLines: 2,
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(e.emoji, style: const TextStyle(fontSize: 30)),
+                                          const SizedBox(height: 5),
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                                            child: Text(
+                                              e.name.length > 13
+                                                  ? '${e.name.substring(0, 12)}…'
+                                                  : e.name,
+                                              style: TextStyle(
+                                                color: color,
+                                                fontSize: 8,
+                                                fontWeight: FontWeight.w700,
+                                                height: 1.2,
+                                                decoration: TextDecoration.none,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                              maxLines: 2,
+                                            ),
+                                          ),
+                                          // Badge mutazione
+                                          if (mutData != null) ...[
+                                            const SizedBox(height: 4),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                  horizontal: 4, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: mutData.color.withOpacity(0.20),
+                                                borderRadius: BorderRadius.circular(4),
+                                                border: Border.all(
+                                                    color: mutData.color, width: 1),
+                                              ),
+                                              child: Text(
+                                                mutData.label,
+                                                style: TextStyle(
+                                                  color: mutData.color,
+                                                  fontSize: 7,
+                                                  fontWeight: FontWeight.w900,
+                                                  letterSpacing: 0.3,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      );
-                    },
-                  ),
-
-                  // ── Left fade ──────────────────────────────────
-                  Positioned(
-                    left: 0, top: 0, bottom: 0,
-                    child: IgnorePointer(
-                      child: Container(
-                        width: w * 0.22,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(colors: [
-                            AppColors.background,
-                            AppColors.background.withOpacity(0),
-                          ]),
-                        ),
+                                  ],
+                                );
+                              }).toList(),
+                            ),
+                          );
+                        },
                       ),
-                    ),
-                  ),
 
-                  // ── Right fade ─────────────────────────────────
-                  Positioned(
-                    right: 0, top: 0, bottom: 0,
-                    child: IgnorePointer(
-                      child: Container(
-                        width: w * 0.22,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(colors: [
-                            AppColors.background.withOpacity(0),
-                            AppColors.background,
-                          ]),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // ── Center selector ────────────────────────────
-                  IgnorePointer(
-                    child: Container(
-                      width: _itemW + 8,
-                      height: _itemH + 8,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(17),
-                        border: Border.all(color: AppColors.neonCyan, width: 2.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.neonCyan.withOpacity(0.45),
-                            blurRadius: 24,
-                            spreadRadius: 2,
+                      // Fade sinistro
+                      Positioned(
+                        left: 0, top: 0, bottom: 0,
+                        child: IgnorePointer(
+                          child: Container(
+                            width: w * 0.22,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(colors: [
+                                AppColors.background,
+                                AppColors.background.withOpacity(0),
+                              ]),
+                            ),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
 
-                  // ── Top/bottom arrows ──────────────────────────
-                  const Positioned(
-                    top: 0,
-                    child: Text('▼', style: TextStyle(color: AppColors.neonCyan, fontSize: 13)),
+                      // Fade destro
+                      Positioned(
+                        right: 0, top: 0, bottom: 0,
+                        child: IgnorePointer(
+                          child: Container(
+                            width: w * 0.22,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(colors: [
+                                AppColors.background.withOpacity(0),
+                                AppColors.background,
+                              ]),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Selettore centrale
+                      IgnorePointer(
+                        child: Container(
+                          width: _itemW + 8,
+                          height: _itemH + 8,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(17),
+                            border: Border.all(color: AppColors.neonCyan, width: 2.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.neonCyan.withOpacity(0.45),
+                                blurRadius: 24,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      // Frecette top/bottom
+                      const Positioned(
+                        top: 0,
+                        child: Text('▼',
+                            style: TextStyle(color: AppColors.neonCyan, fontSize: 13)),
+                      ),
+                      const Positioned(
+                        bottom: 0,
+                        child: Text('▲',
+                            style: TextStyle(color: AppColors.neonCyan, fontSize: 13)),
+                      ),
+                    ],
                   ),
-                  const Positioned(
-                    bottom: 0,
-                    child: Text('▲', style: TextStyle(color: AppColors.neonCyan, fontSize: 13)),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
 
-          const SizedBox(height: 28),
-          const Text(
-            'Sei fortunato? 🍀',
-            style: TextStyle(color: AppColors.textMuted, fontSize: 15),
-          ),
-        ],
-      );
-    });
+              const SizedBox(height: 40),
+              const Text(
+                'Sei fortunato? 🍀',
+                style: TextStyle(color: AppColors.textMuted, fontSize: 16),
+              ),
+
+              const Spacer(),
+            ],
+          );
+        }),
+      ),
+    );
   }
 }
 
@@ -263,5 +321,11 @@ class _RoulEntry {
   final String name;
   final String emoji;
   final String rarityKey;
-  const _RoulEntry({required this.name, required this.emoji, required this.rarityKey});
+  final String mutationKey;
+  const _RoulEntry({
+    required this.name,
+    required this.emoji,
+    required this.rarityKey,
+    required this.mutationKey,
+  });
 }

@@ -13,45 +13,42 @@ class CurrencyBar extends ConsumerWidget {
     return SafeArea(
       bottom: false,
       child: Container(
-        height: 58,
-        padding: const EdgeInsets.fromLTRB(14, 0, 14, 0),
+        padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
         decoration: BoxDecoration(
-          color: AppColors.navBackground,
-          border: const Border(bottom: BorderSide(color: AppColors.border, width: 0.5)),
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF0B1929), Color(0xFF0A1628)],
+          ),
+          border: const Border(bottom: BorderSide(color: AppColors.border, width: 1)),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 2),
-            ),
+            BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 2)),
           ],
         ),
         child: player.when(
-          loading: () => const SizedBox.shrink(),
-          error: (_, __) => const SizedBox.shrink(),
+          loading: () => const SizedBox(height: 48),
+          error: (_, __) => const SizedBox(height: 48),
           data: (p) => Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Level + XP block
-              _LevelBlock(level: p.level, xpProgress: p.xpProgress.clamp(0.0, 1.0), xp: p.xp, xpReq: p.xpRequired),
-              const SizedBox(width: 10),
-              const Spacer(),
-              // Prestige badge
-              if (p.prestigeLevel > 0) ...[
-                _PrestigeBadge(p.prestigeLevel),
-                const SizedBox(width: 8),
-              ],
-              // Currencies
-              _CurrencyPill(
-                icon: '🪙',
-                value: _fmt(p.coins),
-                color: AppColors.coins,
+              _AvatarSection(
+                level: p.level,
+                username: p.username,
+                xpProgress: p.xpProgress.clamp(0.0, 1.0),
+                xp: p.xp,
+                xpReq: p.xpRequired,
               ),
-              const SizedBox(width: 6),
+              const Spacer(),
               _CurrencyPill(
-                icon: '💎',
-                value: '${p.gems}',
+                label: _fmt(p.coins),
+                color: AppColors.coins,
+                emoji: '🪙',
+                glow: true,
+              ),
+              const SizedBox(width: 8),
+              _CurrencyPill(
+                label: '${p.gems}',
                 color: AppColors.gems,
+                emoji: '💎',
               ),
             ],
           ),
@@ -62,145 +59,161 @@ class CurrencyBar extends ConsumerWidget {
 
   static String _fmt(double v) {
     if (v >= 1e12) return '${(v / 1e12).toStringAsFixed(1)}T';
-    if (v >= 1e9) return '${(v / 1e9).toStringAsFixed(1)}B';
+    if (v >= 1e9)  return '${(v / 1e9).toStringAsFixed(1)}B';
+    if (v >= 1e6)  return '${(v / 1e6).toStringAsFixed(1)}M';
+    if (v >= 1e3)  return '${(v / 1e3).toStringAsFixed(1)}K';
+    return v.toStringAsFixed(0);
+  }
+}
+
+// ─── Avatar ───────────────────────────────────────────────────────────────────
+
+class _AvatarSection extends StatelessWidget {
+  final int level;
+  final String username;
+  final double xpProgress, xp, xpReq;
+
+  const _AvatarSection({
+    required this.level, required this.username,
+    required this.xpProgress, required this.xp, required this.xpReq,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final initial = username.isNotEmpty ? username[0].toUpperCase() : 'P';
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Avatar circle with XP ring
+        SizedBox(
+          width: 48,
+          height: 48,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // XP ring
+              SizedBox(
+                width: 48, height: 48,
+                child: CircularProgressIndicator(
+                  value: xpProgress,
+                  strokeWidth: 2.5,
+                  backgroundColor: AppColors.border,
+                  valueColor: const AlwaysStoppedAnimation(AppColors.neonCyan),
+                ),
+              ),
+              // Avatar
+              Container(
+                width: 38, height: 38,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF1A3A5C), Color(0xFF0F2035)],
+                  ),
+                  boxShadow: [
+                    BoxShadow(color: AppColors.neonCyan.withOpacity(0.3), blurRadius: 8),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    initial,
+                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ),
+              // Level badge
+              Positioned(
+                bottom: 0, right: 0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [AppColors.neonCyan, Color(0xFF3A6BD4)]),
+                    borderRadius: BorderRadius.circular(6),
+                    boxShadow: [BoxShadow(color: AppColors.neonCyan.withOpacity(0.5), blurRadius: 4)],
+                  ),
+                  child: Text(
+                    '$level',
+                    style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              username,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.3,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              '${_fmtXp(xp)} / ${_fmtXp(xpReq)} XP',
+              style: const TextStyle(color: AppColors.textMuted, fontSize: 9),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  static String _fmtXp(double v) {
     if (v >= 1e6) return '${(v / 1e6).toStringAsFixed(1)}M';
     if (v >= 1e3) return '${(v / 1e3).toStringAsFixed(1)}K';
     return v.toStringAsFixed(0);
   }
 }
 
-class _LevelBlock extends StatelessWidget {
-  final int level;
-  final double xpProgress;
-  final double xp;
-  final double xpReq;
-  const _LevelBlock({required this.level, required this.xpProgress, required this.xp, required this.xpReq});
+// ─── Currency pill ────────────────────────────────────────────────────────────
+
+class _CurrencyPill extends StatelessWidget {
+  final String label;
+  final String emoji;
+  final Color color;
+  final bool glow;
+  const _CurrencyPill({
+    required this.label,
+    required this.emoji,
+    required this.color,
+    this.glow = false,
+  });
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+    decoration: BoxDecoration(
+      color: color.withOpacity(0.10),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: color.withOpacity(0.35), width: 1),
+      boxShadow: glow
+          ? [BoxShadow(color: color.withOpacity(0.20), blurRadius: 10, spreadRadius: 1)]
+          : null,
+    ),
+    child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Level badge
-        Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [AppColors.neonCyan, AppColors.neonPurple],
-            ),
-            boxShadow: [BoxShadow(color: AppColors.neonCyan.withOpacity(0.35), blurRadius: 10)],
-          ),
-          child: Center(
-            child: Text(
-              '$level',
-              style: const TextStyle(
-                color: Colors.black,
-                fontSize: 14,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        // XP bar + label
-        SizedBox(
-          width: 80,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'LIVELLO',
-                style: TextStyle(color: AppColors.textMuted, fontSize: 7, letterSpacing: 1.5, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 3),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: Stack(
-                  children: [
-                    Container(height: 5, color: AppColors.surface),
-                    FractionallySizedBox(
-                      widthFactor: xpProgress,
-                      child: Container(
-                        height: 5,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(colors: [AppColors.neonCyan, AppColors.neonPurple]),
-                          boxShadow: [BoxShadow(color: AppColors.neonCyan.withOpacity(0.7), blurRadius: 4)],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                '${xp.toStringAsFixed(0)} / ${xpReq.toStringAsFixed(0)} XP',
-                style: const TextStyle(color: AppColors.textMuted, fontSize: 8),
-              ),
-            ],
+        Text(emoji, style: const TextStyle(fontSize: 14)),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: TextStyle(
+            color: color,
+            fontSize: 13,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.3,
           ),
         ),
       ],
-    );
-  }
-}
-
-class _CurrencyPill extends StatelessWidget {
-  final String icon;
-  final String value;
-  final Color color;
-  const _CurrencyPill({required this.icon, required this.value, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(icon, style: const TextStyle(fontSize: 13)),
-          const SizedBox(width: 5),
-          Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-              shadows: [Shadow(color: color.withOpacity(0.4), blurRadius: 4)],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PrestigeBadge extends StatelessWidget {
-  final int level;
-  const _PrestigeBadge(this.level);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [AppColors.neonPurple, AppColors.neonPink]),
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [BoxShadow(color: AppColors.neonPurple.withOpacity(0.4), blurRadius: 8)],
-      ),
-      child: Text(
-        '⚜️ P$level',
-        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900),
-      ),
-    );
-  }
+    ),
+  );
 }

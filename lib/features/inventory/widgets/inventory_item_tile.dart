@@ -23,7 +23,7 @@ const _itemEmojis = {
   'Ω Omega Particle': '⚛️',
 };
 
-class InventoryItemTile extends StatelessWidget {
+class InventoryItemTile extends StatefulWidget {
   final ItemModel item;
   final bool isSelected;
   final VoidCallback? onTap;
@@ -40,220 +40,311 @@ class InventoryItemTile extends StatelessWidget {
   });
 
   @override
+  State<InventoryItemTile> createState() => _InventoryItemTileState();
+}
+
+class _InventoryItemTileState extends State<InventoryItemTile> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
-    final color = AppColors.rarityColor(item.rarityKey);
-    final hasMutation = item.mutation != Mutation.none;
-    final mutColor = hasMutation ? AppColors.mutationColor(item.mutationKey) : Colors.transparent;
-    final emoji = _itemEmojis[item.name] ?? '📦';
+    final color      = AppColors.rarityColor(widget.item.rarityKey);
+    final hasMut     = widget.item.mutation != Mutation.none;
+    final mutColor   = hasMut ? AppColors.mutationColor(widget.item.mutationKey) : Colors.transparent;
+    final emoji      = _itemEmojis[widget.item.name] ?? '📦';
+    final isRarePlus = widget.item.rarity.index >= 3; // epic+
+    final borderC    = widget.isSelected ? color : (hasMut ? mutColor : color.withOpacity(0.45));
+    final borderW    = widget.isSelected || hasMut ? 2.0 : 1.0;
 
     return GestureDetector(
-      onTap: onTap ?? () => _showDetail(context),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              isSelected ? color.withOpacity(0.3) : color.withOpacity(0.1),
-              isSelected ? color.withOpacity(0.1) : AppColors.surface,
+      onTapDown:   (_) => setState(() => _pressed = true),
+      onTapUp:     (_) { setState(() => _pressed = false); (widget.onTap ?? () => _showDetail(context))(); },
+      onTapCancel: ()  => setState(() => _pressed = false),
+      child: AnimatedScale(
+        scale: _pressed ? 0.94 : 1.0,
+        duration: const Duration(milliseconds: 80),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: widget.isSelected
+                  ? [color.withOpacity(0.32), color.withOpacity(0.12)]
+                  : [color.withOpacity(isRarePlus ? 0.14 : 0.07), AppColors.surface],
+            ),
+            border: Border.all(color: borderC, width: borderW),
+            boxShadow: [
+              if (hasMut)
+                BoxShadow(color: mutColor.withOpacity(0.4), blurRadius: 16, spreadRadius: 1),
+              if (isRarePlus && !hasMut)
+                BoxShadow(color: color.withOpacity(0.25), blurRadius: 12),
             ],
           ),
-          border: Border.all(
-            color: isSelected ? color : color.withOpacity(0.5),
-            width: isSelected ? 2 : 1,
-          ),
-          boxShadow: [
-            if (hasMutation)
-              BoxShadow(color: mutColor.withOpacity(0.35), blurRadius: 14, spreadRadius: 1),
-            if (item.rarity.index >= 4)
-              BoxShadow(color: color.withOpacity(0.2), blurRadius: 10),
-          ],
-        ),
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Emoji icon
-                  Expanded(
-                    child: Center(
-                      child: Text(emoji, style: const TextStyle(fontSize: 34)),
+          child: Stack(
+            children: [
+              // Top gradient shine for rare+
+              if (isRarePlus)
+                Positioned(
+                  top: 0, left: 0, right: 0,
+                  child: Container(
+                    height: 36,
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [color.withOpacity(0.18), Colors.transparent],
+                      ),
                     ),
                   ),
+                ),
 
-                  // Mutation tag
-                  if (hasMutation)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(7, 7, 7, 7),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Rarity name badge at top
                     Container(
-                      margin: const EdgeInsets.only(bottom: 3),
                       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                       decoration: BoxDecoration(
-                        color: mutColor.withOpacity(0.2),
+                        color: color.withOpacity(0.18),
                         borderRadius: BorderRadius.circular(5),
-                        border: Border.all(color: mutColor.withOpacity(0.6), width: 1),
                       ),
                       child: Text(
-                        '✦ ${item.mutation.displayName}',
-                        style: TextStyle(color: mutColor, fontSize: 7, fontWeight: FontWeight.w800),
+                        widget.item.rarity.displayName.toUpperCase(),
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 7,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ),
 
-                  // Name
-                  Text(
-                    item.name,
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      height: 1.2,
+                    const SizedBox(height: 4),
+
+                    // Emoji icon
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          emoji,
+                          style: TextStyle(
+                            fontSize: 36,
+                            shadows: isRarePlus
+                                ? [Shadow(color: color.withOpacity(0.7), blurRadius: 12)]
+                                : null,
+                          ),
+                        ),
+                      ),
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
 
-                  const SizedBox(height: 2),
+                    // Mutation tag
+                    if (hasMut)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 3),
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: mutColor.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: mutColor.withOpacity(0.5), width: 1),
+                        ),
+                        child: Text(
+                          '✦ ${widget.item.mutation.displayName}',
+                          style: TextStyle(color: mutColor, fontSize: 6.5, fontWeight: FontWeight.w800),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
 
-                  // Value
-                  Row(
-                    children: [
-                      const Text('🪙', style: TextStyle(fontSize: 9)),
-                      const SizedBox(width: 2),
-                      Text(
-                        _fmt(item.finalValue),
+                    // Name
+                    Text(
+                      widget.item.name,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+
+                    const SizedBox(height: 3),
+
+                    // Value
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.coins.withOpacity(0.10),
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: Text(
+                        _fmt(widget.item.finalValue),
                         style: const TextStyle(
                           color: AppColors.coins,
                           fontSize: 9,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // Top badges
-            Positioned(
-              top: 6,
-              right: 6,
-              child: Column(
-                children: [
-                  if (item.isLocked)
-                    Container(
-                      padding: const EdgeInsets.all(3),
-                      decoration: BoxDecoration(
-                        color: AppColors.neonCyan.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      child: const Text('🔒', style: TextStyle(fontSize: 10)),
                     ),
-                  if (isSelected)
-                    Container(
-                      width: 18,
-                      height: 18,
-                      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                      child: const Icon(Icons.check, size: 12, color: Colors.black),
-                    ),
-                ],
-              ),
-            ),
-
-            // Rarity corner dot
-            Positioned(
-              top: 6,
-              left: 6,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                  boxShadow: [BoxShadow(color: color.withOpacity(0.8), blurRadius: 4)],
+                  ],
                 ),
               ),
-            ),
-          ],
+
+              // Lock badge
+              if (widget.item.isLocked)
+                Positioned(
+                  top: 5, right: 5,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: AppColors.neonCyan.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: const Text('🔒', style: TextStyle(fontSize: 9)),
+                  ),
+                ),
+
+              // Selection checkmark
+              if (widget.isSelected)
+                Positioned(
+                  top: 5, right: 5,
+                  child: Container(
+                    width: 20, height: 20,
+                    decoration: BoxDecoration(color: color, shape: BoxShape.circle,
+                        boxShadow: [BoxShadow(color: color.withOpacity(0.5), blurRadius: 6)]),
+                    child: const Icon(Icons.check, size: 13, color: Colors.black),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   void _showDetail(BuildContext context) {
-    final color = AppColors.rarityColor(item.rarityKey);
-    final emoji = _itemEmojis[item.name] ?? '📦';
+    final color = AppColors.rarityColor(widget.item.rarityKey);
+    final hasMut = widget.item.mutation != Mutation.none;
+    final mutColor = hasMut ? AppColors.mutationColor(widget.item.mutationKey) : Colors.transparent;
+    final emoji = _itemEmojis[widget.item.name] ?? '📦';
+
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          border: Border(top: BorderSide(color: color.withOpacity(0.5), width: 1.5)),
+          boxShadow: [BoxShadow(color: color.withOpacity(0.2), blurRadius: 40, spreadRadius: 2)],
+        ),
+        padding: EdgeInsets.fromLTRB(24, 12, 24, MediaQuery.of(context).padding.bottom + 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(width: 40, height: 4,
-              decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))),
+            // Handle
+            Container(width: 44, height: 4,
+              decoration: BoxDecoration(color: color.withOpacity(0.4), borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 20),
-            Text(emoji, style: const TextStyle(fontSize: 72)),
-            const SizedBox(height: 12),
-            Text(item.name, style: TextStyle(color: color, fontSize: 22, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 4),
+
+            // Emoji with glow
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+              width: 110, height: 110,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(colors: [color.withOpacity(0.2), Colors.transparent]),
+                boxShadow: [BoxShadow(color: color.withOpacity(0.3), blurRadius: 30)],
+              ),
+              child: Center(child: Text(emoji, style: const TextStyle(fontSize: 70))),
+            ),
+            const SizedBox(height: 14),
+
+            // Rarity badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
                 color: color.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: color.withOpacity(0.5)),
+                boxShadow: [BoxShadow(color: color.withOpacity(0.2), blurRadius: 10)],
               ),
-              child: Text(item.rarity.displayName,
-                style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700)),
+              child: Text(
+                widget.item.rarity.displayName.toUpperCase(),
+                style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 2,
+                    shadows: [Shadow(color: color, blurRadius: 6)]),
+              ),
             ),
-            if (item.mutation != Mutation.none) ...[
-              const SizedBox(height: 6),
-              Text('✦ ${item.mutation.displayName}',
-                style: TextStyle(color: AppColors.mutationColor(item.mutationKey),
-                  fontSize: 13, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 10),
+
+            // Mutation
+            if (hasMut) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: mutColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: mutColor.withOpacity(0.5)),
+                ),
+                child: Text('✦ ${widget.item.mutation.displayName}',
+                  style: TextStyle(color: mutColor, fontSize: 11, fontWeight: FontWeight.w800)),
+              ),
+              const SizedBox(height: 8),
             ],
+
+            // Name
+            Text(
+              widget.item.name,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.textPrimary, fontSize: 22, fontWeight: FontWeight.w800),
+            ),
             const SizedBox(height: 16),
+
+            // Divider
+            Container(height: 1, color: AppColors.border),
+            const SizedBox(height: 16),
+
+            // Value
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('🪙', style: TextStyle(fontSize: 22)),
+                const Text('🪙', style: TextStyle(fontSize: 24)),
                 const SizedBox(width: 8),
-                Text(_fmt(item.finalValue),
-                  style: const TextStyle(color: AppColors.coins, fontSize: 28, fontWeight: FontWeight.w900)),
+                Text(
+                  _fmt(widget.item.finalValue),
+                  style: TextStyle(
+                    color: AppColors.coins,
+                    fontSize: 30,
+                    fontWeight: FontWeight.w900,
+                    shadows: [Shadow(color: AppColors.coins.withOpacity(0.5), blurRadius: 10)],
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 24),
+
+            // Action buttons
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () { onLock(); Navigator.pop(context); },
-                    icon: Text(item.isLocked ? '🔓' : '🔒', style: const TextStyle(fontSize: 16)),
-                    label: Text(item.isLocked ? 'Sblocca' : 'Blocca'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.neonCyan,
-                      side: const BorderSide(color: AppColors.neonCyan),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
+                  child: _ActionBtn(
+                    label: widget.item.isLocked ? '🔓 Sblocca' : '🔒 Blocca',
+                    color: AppColors.neonCyan,
+                    outlined: true,
+                    onTap: () { widget.onLock(); Navigator.pop(context); },
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: item.isLocked ? null : () { onSell(); Navigator.pop(context); },
-                    icon: const Text('💰', style: TextStyle(fontSize: 16)),
-                    label: const Text('Vendi'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.coins,
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
+                  child: _ActionBtn(
+                    label: '💰 Vendi',
+                    color: AppColors.coins,
+                    outlined: false,
+                    enabled: !widget.item.isLocked,
+                    onTap: () { widget.onSell(); Navigator.pop(context); },
                   ),
                 ),
               ],
@@ -265,10 +356,66 @@ class InventoryItemTile extends StatelessWidget {
   }
 
   String _fmt(double v) {
-    if (v >= 1e12) return '${(v / 1e12).toStringAsFixed(1)}T€';
-    if (v >= 1e9) return '${(v / 1e9).toStringAsFixed(1)}B€';
-    if (v >= 1e6) return '${(v / 1e6).toStringAsFixed(1)}M€';
-    if (v >= 1e3) return '${(v / 1e3).toStringAsFixed(0)}K€';
-    return '${v.toStringAsFixed(0)}€';
+    if (v >= 1e12) return '${(v / 1e12).toStringAsFixed(1)}T';
+    if (v >= 1e9)  return '${(v / 1e9).toStringAsFixed(1)}B';
+    if (v >= 1e6)  return '${(v / 1e6).toStringAsFixed(1)}M';
+    if (v >= 1e3)  return '${(v / 1e3).toStringAsFixed(0)}K';
+    return v.toStringAsFixed(0);
+  }
+}
+
+class _ActionBtn extends StatefulWidget {
+  final String label;
+  final Color color;
+  final bool outlined;
+  final bool enabled;
+  final VoidCallback onTap;
+  const _ActionBtn({
+    required this.label,
+    required this.color,
+    required this.outlined,
+    required this.onTap,
+    this.enabled = true,
+  });
+
+  @override
+  State<_ActionBtn> createState() => _ActionBtnState();
+}
+
+class _ActionBtnState extends State<_ActionBtn> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final effectiveColor = widget.enabled ? widget.color : AppColors.textMuted;
+    return GestureDetector(
+      onTapDown:   widget.enabled ? (_) => setState(() => _pressed = true)  : null,
+      onTapUp:     widget.enabled ? (_) { setState(() => _pressed = false); widget.onTap(); } : null,
+      onTapCancel: widget.enabled ? ()  => setState(() => _pressed = false) : null,
+      child: AnimatedScale(
+        scale: _pressed ? 0.95 : 1.0,
+        duration: const Duration(milliseconds: 80),
+        child: Container(
+          height: 52,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: widget.outlined ? Colors.transparent : effectiveColor,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: effectiveColor, width: 1.5),
+            boxShadow: !widget.outlined && widget.enabled
+                ? [BoxShadow(color: effectiveColor.withOpacity(0.35), blurRadius: 10)]
+                : null,
+          ),
+          child: Text(
+            widget.label,
+            style: TextStyle(
+              color: widget.outlined ? effectiveColor : Colors.black,
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

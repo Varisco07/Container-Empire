@@ -89,9 +89,9 @@ class ContainerCard extends StatelessWidget {
   }
 
   String _fmtPrice(double v) {
-    if (v >= 1e6) return '${(v / 1e6).toStringAsFixed(0)}M€';
-    if (v >= 1e3) return '${(v / 1e3).toStringAsFixed(0)}K€';
-    return '${v.toStringAsFixed(0)}€';
+    if (v >= 1e6) return '🪙 ${(v / 1e6).toStringAsFixed(0)}M';
+    if (v >= 1e3) return '🪙 ${(v / 1e3).toStringAsFixed(0)}K';
+    return '🪙 ${v.toStringAsFixed(0)}';
   }
 
   Color _hexToColor(String hex) {

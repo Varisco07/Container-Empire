@@ -93,10 +93,10 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   String _fmt(double v) {
-    if (v >= 1e9) return '${(v / 1e9).toStringAsFixed(1)}B€';
-    if (v >= 1e6) return '${(v / 1e6).toStringAsFixed(1)}M€';
-    if (v >= 1e3) return '${(v / 1e3).toStringAsFixed(0)}K€';
-    return '${v.toStringAsFixed(0)}€';
+    if (v >= 1e9) return '🪙 ${(v / 1e9).toStringAsFixed(1)}B';
+    if (v >= 1e6) return '🪙 ${(v / 1e6).toStringAsFixed(1)}M';
+    if (v >= 1e3) return '🪙 ${(v / 1e3).toStringAsFixed(0)}K';
+    return '🪙 ${v.toStringAsFixed(0)}';
   }
 }
 
@@ -261,7 +261,7 @@ class _PrestigeSection extends ConsumerWidget {
           ],
         ),
         content: const Text(
-          'Sei sicuro?\n\nVerranno azzerati:\n• Livello → 1\n• XP e upgrade\n• Monete → 500€\n\nIn cambio ottieni:\n• +15% Fortuna PERMANENTE\n• Badge Prestige esclusivo\n• Moltiplicatore cumulativo per ogni prestige futuro',
+          'Sei sicuro?\n\nVerranno azzerati:\n• Livello → 1\n• XP e upgrade\n• Monete → 🪙 500\n\nIn cambio ottieni:\n• +15% Fortuna PERMANENTE\n• Badge Prestige esclusivo\n• Moltiplicatore cumulativo per ogni prestige futuro',
           style: TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.6),
         ),
         actions: [

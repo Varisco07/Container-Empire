@@ -1,5 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/player_model.dart';
+import 'database_service.dart';
 
 class LevelUpResult {
   final bool didLevelUp;
@@ -29,15 +30,30 @@ class DailyBonusResult {
 
 class PlayerService {
   Box<PlayerModel>? _box;
+  String? _uid;
+  final DatabaseService _db = DatabaseService();
 
   String _boxName(String? uid) => uid != null ? 'player_$uid' : 'player_local';
 
   Future<void> init({String? uid}) async {
+    _uid = uid;
     final name = _boxName(uid);
     if (!Hive.isBoxOpen(name)) {
       _box = await Hive.openBox<PlayerModel>(name);
     } else {
       _box = Hive.box<PlayerModel>(name);
+    }
+
+    // Sincronizza da Firestore se connesso
+    if (uid != null) {
+      try {
+        final remote = await _db.loadPlayer(uid);
+        if (remote != null) {
+          await _box!.put(0, remote);
+        }
+      } catch (_) {
+        // Nessuna connessione — usa Hive locale
+      }
     }
   }
 
@@ -59,7 +75,14 @@ class PlayerService {
   }
 
   Future<void> savePlayer(PlayerModel player) async {
+    // 1. Salva locale (immediato, sempre disponibile)
     await _box?.put(0, player);
+    // 2. Sincronizza su Firestore (asincrono, fallisce silenziosamente offline)
+    if (_uid != null) {
+      _db.savePlayer(_uid!, player).catchError((_) {});
+      // 3. Aggiorna classifica globale (fire & forget)
+      _db.updateLeaderboard(player).catchError((_) {});
+    }
   }
 
   Future<void> addCoins(double amount) async {
@@ -125,6 +148,13 @@ class PlayerService {
     final player = localPlayer;
     if (player == null) return;
     player.gems += amount;
+    await savePlayer(player);
+  }
+
+  Future<void> activateVip() async {
+    final player = localPlayer;
+    if (player == null) return;
+    player.isVip = true;
     await savePlayer(player);
   }
 

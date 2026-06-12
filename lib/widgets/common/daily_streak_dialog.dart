@@ -377,7 +377,7 @@ class _ClaimedBanner extends StatelessWidget {
               ).animate().scale(begin: const Offset(0.6, 0.6), curve: Curves.elasticOut),
               const SizedBox(height: 4),
               Text(
-                '+${_fmt(result.coins)}€  ·  +${result.gems} 💎',
+                '+🪙 ${_fmt(result.coins)}  ·  +${result.gems} 💎',
                 style: const TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.w800),
               ).animate().fadeIn(delay: 200.ms),
             ],

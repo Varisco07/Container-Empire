@@ -856,8 +856,8 @@ class _ClanMissionsTab extends StatelessWidget {
     final missions = [
       (title: 'Apri 1.000 container', icon: '📦', current: 347, target: 1000,
           reward: '💎 ×50 + Badge', color: AppColors.neonCyan),
-      (title: 'Vendi oggetti per 5M€', icon: '🪙', current: 1200000, target: 5000000,
-          reward: '💎 ×20 + 10K€', color: AppColors.neonGold),
+      (title: 'Vendi oggetti per 🪙 5M', icon: '🪙', current: 1200000, target: 5000000,
+          reward: '💎 ×20 + 🪙 10K', color: AppColors.neonGold),
       (title: 'Colleziona 10 item Epici', icon: '⭐', current: 6, target: 10,
           reward: '💎 ×30', color: AppColors.epic),
       (title: 'Guadagna 100K punti collettivi', icon: '🏆', current: 48200, target: 100000,

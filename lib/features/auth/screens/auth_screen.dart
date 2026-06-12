@@ -1,10 +1,104 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/services/player_service.dart';
 import '../../../core/services/service_locator.dart';
 import '../../../core/theme/app_colors.dart';
+
+// ─── Animated auth background ────────────────────────────────────────────────
+
+class _AuthBackground extends StatefulWidget {
+  const _AuthBackground();
+  @override
+  State<_AuthBackground> createState() => _AuthBackgroundState();
+}
+
+class _AuthBackgroundState extends State<_AuthBackground>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(seconds: 6))
+      ..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (_, __) => CustomPaint(
+        painter: _AuthBgPainter(_ctrl.value),
+        child: const SizedBox.expand(),
+      ),
+    );
+  }
+}
+
+class _AuthBgPainter extends CustomPainter {
+  final double t;
+  _AuthBgPainter(this.t);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Base
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Paint()..shader = const LinearGradient(
+        begin: Alignment.topCenter, end: Alignment.bottomCenter,
+        colors: [Color(0xFF0A1628), Color(0xFF0D1E34), Color(0xFF0A1628)],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
+    );
+
+    // Pulsing top halo (cyan)
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Paint()..shader = RadialGradient(
+        center: const Alignment(0, -0.8),
+        radius: 0.55 + t * 0.1,
+        colors: [
+          const Color(0xFF4B7BEC).withOpacity(0.08 + t * 0.04),
+          Colors.transparent,
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
+    );
+
+    // Bottom purple halo
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Paint()..shader = RadialGradient(
+        center: const Alignment(0.5, 1.0),
+        radius: 0.5,
+        colors: [
+          const Color(0xFF7C5CBF).withOpacity(0.05 + t * 0.03),
+          Colors.transparent,
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_AuthBgPainter old) => old.t != t;
+}
+
+// ─── Google SVG logo (inline) ────────────────────────────────────────────────
+// Evita dipendenza da assets — usiamo un'icona colorata con lettere "G"
+class _GoogleLogo extends StatelessWidget {
+  const _GoogleLogo();
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 22, height: 22,
+    decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white,
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 4)]),
+    child: const Center(
+      child: Text('G', style: TextStyle(
+        color: Color(0xFF4285F4), fontWeight: FontWeight.w900, fontSize: 14, height: 1)),
+    ),
+  );
+}
 
 class AuthScreen extends StatefulWidget {
   final VoidCallback onAuthenticated;
@@ -14,33 +108,20 @@ class AuthScreen extends StatefulWidget {
   State<AuthScreen> createState() => _AuthScreenState();
 }
 
-class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
+class _AuthScreenState extends State<AuthScreen> {
   bool _isLogin = true;
   bool _loading = false;
+  bool _googleLoading = false;
   bool _obscure = true;
   String _error = '';
 
-  final _userCtrl = TextEditingController();
-  final _passCtrl = TextEditingController();
+  final _userCtrl  = TextEditingController();
+  final _passCtrl  = TextEditingController();
   final _emailCtrl = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-
-  late AnimationController _bgCtrl;
-  late AnimationController _floatCtrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _bgCtrl = AnimationController(vsync: this, duration: const Duration(seconds: 6))
-      ..repeat(reverse: true);
-    _floatCtrl = AnimationController(vsync: this, duration: const Duration(seconds: 3))
-      ..repeat(reverse: true);
-  }
+  final _formKey   = GlobalKey<FormState>();
 
   @override
   void dispose() {
-    _bgCtrl.dispose();
-    _floatCtrl.dispose();
     _userCtrl.dispose();
     _passCtrl.dispose();
     _emailCtrl.dispose();
@@ -64,7 +145,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     if (!mounted) return;
 
     if (result == AuthResult.success) {
-      final uid = auth.currentUid!;
+      final uid     = auth.currentUid!;
       final account = auth.currentAccount!;
       await reloadUserServices(uid);
       await sl<PlayerService>().loadOrCreate(username: account.username, uid: uid);
@@ -76,54 +157,122 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
 
   String _errorMsg(AuthResult r) {
     switch (r) {
-      case AuthResult.userNotFound:  return 'Account non trovato. Registrati!';
-      case AuthResult.wrongPassword: return 'Password errata. Riprova.';
-      case AuthResult.usernameTaken: return 'Username già in uso.';
+      case AuthResult.userNotFound:      return 'Account non trovato. Registrati!';
+      case AuthResult.wrongPassword:     return 'Password errata. Riprova.';
+      case AuthResult.usernameTaken:     return 'Username già in uso.';
+      case AuthResult.emailAlreadyInUse: return 'Email già registrata. Accedi invece.';
+      case AuthResult.networkError:      return 'Errore di rete o server. Controlla la connessione e riprova.';
       case AuthResult.invalidInput:
-        return _isLogin ? 'Username o password troppo corti' : 'Username min. 3 caratteri, password min. 6';
-      default: return 'Errore. Riprova.';
+        return _isLogin ? 'Username o password troppo corti' : 'Min. 3 caratteri per username, 6 per password';
+      default: return 'Account non trovato. Prova a registrarti o controlla username/password.';
+    }
+  }
+
+  Future<void> _showForgotPassword() async {
+    final emailCtrl = TextEditingController();
+    final sent = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF0D1526),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Reset Password',
+            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w900)),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Text('Inserisci la tua email per ricevere il link di reset.',
+              style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+          const SizedBox(height: 14),
+          TextField(
+            controller: emailCtrl,
+            keyboardType: TextInputType.emailAddress,
+            style: const TextStyle(color: AppColors.textPrimary),
+            decoration: InputDecoration(
+              hintText: 'email@example.com',
+              hintStyle: const TextStyle(color: AppColors.textMuted),
+              filled: true, fillColor: AppColors.surface,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.border)),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.border)),
+              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.neonCyan, width: 1.5)),
+            ),
+          ),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Annulla', style: TextStyle(color: AppColors.textMuted))),
+          ElevatedButton(
+            onPressed: () async {
+              final email = emailCtrl.text.trim();
+              if (email.isEmpty) return;
+              Navigator.pop(ctx, true);
+              await sl<AuthService>().sendPasswordReset(email);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.neonCyan, foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+            child: const Text('INVIA', style: TextStyle(fontWeight: FontWeight.w800)),
+          ),
+        ],
+      ),
+    );
+    if (sent == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('✉️ Email di reset inviata! Controlla la posta.'),
+        backgroundColor: AppColors.neonGreen,
+        behavior: SnackBarBehavior.floating,
+      ));
+    }
+  }
+
+  Future<void> _loginWithGoogle() async {
+    setState(() { _googleLoading = true; _error = ''; });
+    final auth   = sl<AuthService>();
+    final result = await auth.loginWithGoogle();
+    if (!mounted) return;
+    if (result == AuthResult.success) {
+      final uid     = auth.currentUid!;
+      final account = auth.currentAccount!;
+      await reloadUserServices(uid);
+      await sl<PlayerService>().loadOrCreate(username: account.username, uid: uid);
+      widget.onAuthenticated();
+    } else {
+      setState(() {
+        _googleLoading = false;
+        // Se l'utente ha semplicemente annullato, non mostrare errore
+        if (result != AuthResult.error) {
+          _error = _errorMsg(result);
+        }
+      });
     }
   }
 
   void _toggle() => setState(() {
     _isLogin = !_isLogin;
     _error = '';
-    _userCtrl.clear();
-    _passCtrl.clear();
-    _emailCtrl.clear();
+    _userCtrl.clear(); _passCtrl.clear(); _emailCtrl.clear();
   });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF04020C),
+      backgroundColor: AppColors.background,
       resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
-          _AnimatedBackground(ctrl: _bgCtrl),
-          const _FloatingParticles(),
+          // Animated background
+          const _AuthBackground(),
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  const SizedBox(height: 44),
+                  _buildLogo(),
                   const SizedBox(height: 32),
-                  AnimatedBuilder(
-                    animation: _floatCtrl,
-                    builder: (_, __) => Transform.translate(
-                      offset: Offset(0, -5 + _floatCtrl.value * 10),
-                      child: const _LogoSection(),
-                    ),
-                  ).animate().fadeIn(duration: 700.ms).slideY(begin: -0.1, end: 0),
+                  _buildCard(),
                   const SizedBox(height: 32),
-                  _AuthCard(
-                    isLogin: _isLogin, loading: _loading, obscure: _obscure,
-                    error: _error, formKey: _formKey,
-                    userCtrl: _userCtrl, passCtrl: _passCtrl, emailCtrl: _emailCtrl,
-                    onToggleObscure: () => setState(() => _obscure = !_obscure),
-                    onSubmit: _submit, onToggle: _toggle,
-                  ).animate(delay: 200.ms).fadeIn(duration: 500.ms).slideY(begin: 0.08, end: 0),
-                  const SizedBox(height: 24),
                 ],
               ),
             ),
@@ -132,351 +281,362 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
       ),
     );
   }
-}
 
-// ─── Animated background ──────────────────────────────────────────────────────
-
-class _AnimatedBackground extends StatelessWidget {
-  final AnimationController ctrl;
-  const _AnimatedBackground({required this.ctrl});
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: ctrl,
-      builder: (_, __) => SizedBox.expand(
-        child: Stack(children: [
-          Positioned(top: -100, left: -80,
-            child: Container(width: 360, height: 360, decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(colors: [
-                AppColors.neonCyan.withOpacity(0.06 + ctrl.value * 0.04), Colors.transparent]),
-            ))),
-          Positioned(bottom: -80, right: -60,
-            child: Container(width: 300, height: 300, decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(colors: [
-                AppColors.neonPurple.withOpacity(0.08 + ctrl.value * 0.05), Colors.transparent]),
-            ))),
-          Positioned(top: 200, left: 60,
-            child: Container(width: 200, height: 200, decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(colors: [
-                AppColors.neonGold.withOpacity(0.03 + ctrl.value * 0.025), Colors.transparent]),
-            ))),
-        ]),
-      ),
-    );
-  }
-}
-
-// ─── Floating particles ───────────────────────────────────────────────────────
-
-class _FloatingParticles extends StatelessWidget {
-  const _FloatingParticles();
-
-  @override
-  Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final rng = Random(77);
-    const emojis = ['📦', '💎', '⭐', '🔮', '✦', '💫'];
-    return IgnorePointer(
-      child: SizedBox.expand(
-        child: Stack(
-          children: List.generate(10, (i) {
-            final x = rng.nextDouble() * size.width;
-            final y = rng.nextDouble() * size.height;
-            final emoji = emojis[rng.nextInt(emojis.length)];
-            final s = 10.0 + rng.nextDouble() * 14;
-            return Positioned(
-              left: x, top: y,
-              child: Opacity(
-                opacity: 0.12 + rng.nextDouble() * 0.2,
-                child: Text(emoji, style: TextStyle(fontSize: s)),
-              ).animate(
-                delay: Duration(milliseconds: rng.nextInt(3000)),
-                onPlay: (c) => c.repeat(reverse: true),
-              ).moveY(begin: 0, end: -18 - rng.nextDouble() * 20,
-                      duration: Duration(seconds: 3 + rng.nextInt(3)))
-               .fadeIn(duration: 1000.ms)
-               .then().fadeOut(duration: 1000.ms),
-            );
-          }),
+  Widget _buildLogo() {
+    return Column(
+      children: [
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: const Duration(milliseconds: 700),
+          curve: Curves.elasticOut,
+          builder: (_, v, child) => Transform.scale(scale: v, child: child),
+          child: Container(
+            width: 90, height: 90,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF1A3A5C), Color(0xFF0F2035)],
+              ),
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(color: AppColors.neonCyan.withOpacity(0.5), width: 1.5),
+              boxShadow: [
+                BoxShadow(color: AppColors.neonCyan.withOpacity(0.3), blurRadius: 30, spreadRadius: 2),
+                BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 20, offset: const Offset(0, 8)),
+              ],
+            ),
+            child: const Center(child: Text('📦', style: TextStyle(fontSize: 50))),
+          ),
         ),
-      ),
+        const SizedBox(height: 18),
+        ShaderMask(
+          shaderCallback: (b) => const LinearGradient(
+            colors: [Color(0xFF7EC8E3), Color(0xFF4B7BEC)],
+          ).createShader(b),
+          child: const Text(
+            'CONTAINER EMPIRE',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 2.5,
+            ),
+          ),
+        ),
+        const SizedBox(height: 5),
+        const Text(
+          'Apri · Colleziona · Domina',
+          style: TextStyle(color: AppColors.textMuted, fontSize: 11, letterSpacing: 1.5),
+        ),
+      ],
     );
   }
-}
 
-// ─── Logo section ─────────────────────────────────────────────────────────────
-
-class _LogoSection extends StatelessWidget {
-  const _LogoSection();
-
-  @override
-  Widget build(BuildContext context) => Column(children: [
-    Container(
-      width: 90, height: 90,
+  Widget _buildCard() {
+    return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft, end: Alignment.bottomRight,
-          colors: [Color(0xFF1A0A30), Color(0xFF0A0520)],
-        ),
-        border: Border.all(color: AppColors.neonCyan.withOpacity(0.6), width: 2),
-        boxShadow: [
-          BoxShadow(color: AppColors.neonCyan.withOpacity(0.4), blurRadius: 30, spreadRadius: 4),
-          BoxShadow(color: AppColors.neonPurple.withOpacity(0.2), blurRadius: 50, spreadRadius: 8),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 24, offset: const Offset(0, 8))],
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          // Tab switcher
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Row(children: [
+              _Tab(label: 'ACCEDI',     active: _isLogin,  onTap: () { if (!_isLogin) _toggle(); }),
+              _Tab(label: 'REGISTRATI', active: !_isLogin, onTap: () { if (_isLogin) _toggle(); }),
+            ]),
+          ),
+          const SizedBox(height: 24),
+
+          Form(
+            key: _formKey,
+            child: Column(children: [
+              _Field(
+                ctrl: _userCtrl, label: 'Username', icon: Icons.person_outline_rounded,
+                validator: (v) => (v == null || v.trim().length < 3) ? 'Minimo 3 caratteri' : null,
+              ),
+              if (!_isLogin) ...[
+                const SizedBox(height: 12),
+                _Field(
+                  ctrl: _emailCtrl, label: 'Email (opzionale)',
+                  icon: Icons.email_outlined,
+                  keyboardType: TextInputType.emailAddress,
+                ),
+              ],
+              const SizedBox(height: 12),
+              _Field(
+                ctrl: _passCtrl, label: 'Password', icon: Icons.lock_outline_rounded,
+                obscure: _obscure,
+                suffix: IconButton(
+                  icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      color: AppColors.textMuted, size: 18),
+                  onPressed: () => setState(() => _obscure = !_obscure),
+                ),
+                validator: (v) => (v == null || v.length < 6) ? 'Minimo 6 caratteri' : null,
+              ),
+
+              if (_error.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.error.withOpacity(0.35)),
+                  ),
+                  child: Row(children: [
+                    const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(_error, style: const TextStyle(color: AppColors.error, fontSize: 12))),
+                  ]),
+                ),
+              ],
+
+              // ── Password dimenticata (solo in modalità login) ───────────────
+              if (_isLogin) ...[
+                const SizedBox(height: 6),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: GestureDetector(
+                    onTap: _showForgotPassword,
+                    child: const Text('Password dimenticata?',
+                        style: TextStyle(color: AppColors.neonCyan, fontSize: 11, fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 22),
+              _SubmitBtn(isLogin: _isLogin, loading: _loading, onPressed: _submit),
+              const SizedBox(height: 16),
+
+              // ── Google Sign-In ──────────────────────────────────────────────
+              Row(children: [
+                const Expanded(child: Divider(color: AppColors.border)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Text('oppure', style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
+                ),
+                const Expanded(child: Divider(color: AppColors.border)),
+              ]),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: OutlinedButton(
+                  onPressed: _googleLoading ? null : _loginWithGoogle,
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.border),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    backgroundColor: AppColors.surface,
+                  ),
+                  child: _googleLoading
+                      ? const SizedBox(width: 20, height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2.5, color: Color(0xFF4285F4)))
+                      : const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                          _GoogleLogo(),
+                          SizedBox(width: 10),
+                          Text('Continua con Google', style: TextStyle(
+                            color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600)),
+                        ]),
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              GestureDetector(
+                onTap: _toggle,
+                child: RichText(text: TextSpan(style: const TextStyle(fontSize: 12), children: [
+                  TextSpan(
+                    text: _isLogin ? 'Non hai un account? ' : 'Hai già un account? ',
+                    style: const TextStyle(color: AppColors.textMuted),
+                  ),
+                  TextSpan(
+                    text: _isLogin ? 'Registrati' : 'Accedi',
+                    style: const TextStyle(color: AppColors.neonCyan, fontWeight: FontWeight.w800),
+                  ),
+                ])),
+              ),
+            ]),
+          ),
         ],
       ),
-      child: const Center(child: Text('📦', style: TextStyle(fontSize: 48))),
-    ),
-    const SizedBox(height: 18),
-    ShaderMask(
-      shaderCallback: (bounds) => const LinearGradient(
-        colors: [Color(0xFFFFD700), Color(0xFFFFF5B0), Color(0xFFFFD700)],
-        stops: [0, 0.5, 1],
-      ).createShader(bounds),
-      child: const Text('CONTAINER EMPIRE', style: TextStyle(
-        color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 3)),
-    ),
-    const SizedBox(height: 6),
-    const Text('Apri · Colleziona · Domina', style: TextStyle(
-      color: Color(0xFF506070), fontSize: 12, letterSpacing: 1.5)),
-  ]);
+    );
+  }
 }
 
-// ─── Auth card ────────────────────────────────────────────────────────────────
+// ─── Tab switcher ─────────────────────────────────────────────────────────────
 
-class _AuthCard extends StatelessWidget {
-  final bool isLogin, loading, obscure;
-  final String error;
-  final GlobalKey<FormState> formKey;
-  final TextEditingController userCtrl, passCtrl, emailCtrl;
-  final VoidCallback onToggleObscure, onSubmit, onToggle;
-
-  const _AuthCard({
-    required this.isLogin, required this.loading, required this.obscure,
-    required this.error, required this.formKey,
-    required this.userCtrl, required this.passCtrl, required this.emailCtrl,
-    required this.onToggleObscure, required this.onSubmit, required this.onToggle,
-  });
-
-  @override
-  Widget build(BuildContext context) => Container(
-    decoration: BoxDecoration(
-      color: const Color(0xFF0A0A1A),
-      borderRadius: BorderRadius.circular(24),
-      border: Border.all(color: const Color(0xFF1E2A45)),
-      boxShadow: [
-        BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 30, offset: const Offset(0, 10)),
-      ],
-    ),
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(children: [
-        // Tab switcher
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: const Color(0xFF050A15),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFF1A2535)),
-          ),
-          child: Row(children: [
-            _AuthTab(label: 'ACCEDI',     active: isLogin,  onTap: () { if (!isLogin) onToggle(); }),
-            _AuthTab(label: 'REGISTRATI', active: !isLogin, onTap: () { if (isLogin) onToggle(); }),
-          ]),
-        ),
-        const SizedBox(height: 24),
-
-        Form(
-          key: formKey,
-          child: Column(children: [
-            _GameInput(controller: userCtrl, label: 'Username',
-                icon: Icons.person_rounded, iconColor: AppColors.neonCyan,
-                validator: (v) => (v == null || v.trim().length < 3) ? 'Min. 3 caratteri' : null),
-
-            if (!isLogin) ...[
-              const SizedBox(height: 12),
-              _GameInput(controller: emailCtrl, label: 'Email (opzionale)',
-                  icon: Icons.email_rounded, iconColor: AppColors.neonPurple,
-                  keyboardType: TextInputType.emailAddress),
-            ],
-
-            const SizedBox(height: 12),
-
-            _GameInput(
-              controller: passCtrl, label: 'Password',
-              icon: Icons.lock_rounded, iconColor: AppColors.neonGold,
-              obscure: obscure,
-              suffix: IconButton(
-                icon: Icon(obscure ? Icons.visibility_rounded : Icons.visibility_off_rounded,
-                    color: AppColors.textMuted, size: 18),
-                onPressed: onToggleObscure,
-              ),
-              validator: (v) => (v == null || v.length < 6) ? 'Min. 6 caratteri' : null,
-            ),
-
-            if (error.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: AppColors.error.withOpacity(0.1), borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.error.withOpacity(0.4)),
-                ),
-                child: Row(children: [
-                  const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 16),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(error, style: const TextStyle(color: AppColors.error, fontSize: 12))),
-                ]),
-              ).animate().shake(hz: 4, offset: const Offset(4, 0)).fadeIn(),
-            ],
-
-            const SizedBox(height: 22),
-            _SubmitButton(isLogin: isLogin, loading: loading, onPressed: onSubmit),
-            const SizedBox(height: 16),
-
-            GestureDetector(
-              onTap: onToggle,
-              child: RichText(text: TextSpan(style: const TextStyle(fontSize: 12), children: [
-                TextSpan(
-                  text: isLogin ? 'Non hai un account? ' : 'Hai già un account? ',
-                  style: const TextStyle(color: AppColors.textMuted)),
-                TextSpan(
-                  text: isLogin ? 'Registrati →' : 'Accedi →',
-                  style: const TextStyle(color: AppColors.neonCyan, fontWeight: FontWeight.w800,
-                      decoration: TextDecoration.underline, decorationColor: AppColors.neonCyan)),
-              ])),
-            ),
-          ]),
-        ),
-      ]),
-    ),
-  );
-}
-
-class _AuthTab extends StatelessWidget {
+class _Tab extends StatelessWidget {
   final String label;
   final bool active;
   final VoidCallback onTap;
-  const _AuthTab({required this.label, required this.active, required this.onTap});
+  const _Tab({required this.label, required this.active, required this.onTap});
 
   @override
   Widget build(BuildContext context) => Expanded(
     child: GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        padding: const EdgeInsets.symmetric(vertical: 11),
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          gradient: active ? const LinearGradient(colors: [AppColors.neonCyan, AppColors.neonPurple]) : null,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: active ? [BoxShadow(color: AppColors.neonCyan.withOpacity(0.3), blurRadius: 12)] : null,
+          color: active ? AppColors.neonCyan : Colors.transparent,
+          borderRadius: BorderRadius.circular(9),
         ),
-        child: Text(label, textAlign: TextAlign.center, style: TextStyle(
-          color: active ? Colors.white : AppColors.textMuted,
-          fontWeight: active ? FontWeight.w900 : FontWeight.w600, fontSize: 12, letterSpacing: 1)),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: active ? Colors.white : AppColors.textMuted,
+            fontWeight: active ? FontWeight.w800 : FontWeight.w500,
+            fontSize: 12, letterSpacing: 0.8,
+          ),
+        ),
       ),
     ),
   );
 }
 
-class _GameInput extends StatelessWidget {
-  final TextEditingController controller;
+// ─── Text field ───────────────────────────────────────────────────────────────
+
+class _Field extends StatelessWidget {
+  final TextEditingController ctrl;
   final String label;
   final IconData icon;
-  final Color iconColor;
   final bool obscure;
   final TextInputType keyboardType;
   final Widget? suffix;
   final String? Function(String?)? validator;
 
-  const _GameInput({
-    required this.controller, required this.label, required this.icon, required this.iconColor,
-    this.obscure = false, this.keyboardType = TextInputType.text, this.suffix, this.validator,
+  const _Field({
+    required this.ctrl, required this.label, required this.icon,
+    this.obscure = false, this.keyboardType = TextInputType.text,
+    this.suffix, this.validator,
   });
 
   @override
   Widget build(BuildContext context) => TextFormField(
-    controller: controller, obscureText: obscure,
+    controller: ctrl, obscureText: obscure,
     keyboardType: keyboardType, validator: validator,
-    style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
+    style: const TextStyle(color: AppColors.textPrimary, fontSize: 14, fontWeight: FontWeight.w500),
     decoration: InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: AppColors.textMuted, fontSize: 12),
-      prefixIcon: Container(
-        margin: const EdgeInsets.all(10), width: 34, height: 34,
-        decoration: BoxDecoration(
-          color: iconColor.withOpacity(0.12), borderRadius: BorderRadius.circular(9),
-          border: Border.all(color: iconColor.withOpacity(0.3)),
-        ),
-        child: Icon(icon, color: iconColor, size: 16),
+      labelStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+      prefixIcon: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Icon(icon, color: AppColors.textSecondary, size: 20),
       ),
       suffixIcon: suffix,
-      filled: true, fillColor: const Color(0xFF06090F),
+      filled: true,
+      fillColor: AppColors.background,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFF1A2535))),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFF1A2535))),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: iconColor, width: 1.5)),
-      errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.error)),
-      focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.error, width: 1.5)),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.neonCyan, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.error),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.error, width: 1.5),
+      ),
       errorStyle: const TextStyle(color: AppColors.error, fontSize: 10),
     ),
   );
 }
 
-class _SubmitButton extends StatelessWidget {
+// ─── Submit button ────────────────────────────────────────────────────────────
+
+class _SubmitBtn extends StatefulWidget {
   final bool isLogin, loading;
   final VoidCallback onPressed;
-  const _SubmitButton({required this.isLogin, required this.loading, required this.onPressed});
+  const _SubmitBtn({required this.isLogin, required this.loading, required this.onPressed});
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: loading ? null : onPressed,
-    child: AnimatedContainer(
-      duration: const Duration(milliseconds: 150),
-      height: 58,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: loading
-            ? const LinearGradient(colors: [Color(0xFF1A2535), Color(0xFF1A2535)])
-            : const LinearGradient(
-                begin: Alignment.topLeft, end: Alignment.bottomRight,
-                colors: [AppColors.neonCyan, AppColors.neonPurple]),
-        boxShadow: loading ? null : [
-          BoxShadow(color: AppColors.neonCyan.withOpacity(0.4), blurRadius: 20, offset: const Offset(0, 4)),
-          BoxShadow(color: AppColors.neonPurple.withOpacity(0.2), blurRadius: 30, spreadRadius: 2),
-        ],
-        border: Border.all(color: loading ? AppColors.border : Colors.transparent),
-      ),
-      child: Stack(alignment: Alignment.center, children: [
-        if (!loading)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(15),
-            child: Container(color: Colors.transparent)
-                .animate(onPlay: (c) => c.repeat())
-                .shimmer(duration: 2500.ms, color: Colors.white.withOpacity(0.2)),
+  State<_SubmitBtn> createState() => _SubmitBtnState();
+}
+
+class _SubmitBtnState extends State<_SubmitBtn> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown:   widget.loading ? null : (_) => setState(() => _pressed = true),
+      onTapUp:     widget.loading ? null : (_) { setState(() => _pressed = false); widget.onPressed(); },
+      onTapCancel: widget.loading ? null : ()  => setState(() => _pressed = false),
+      child: AnimatedScale(
+        scale: _pressed ? 0.97 : 1.0,
+        duration: const Duration(milliseconds: 80),
+        child: Container(
+          width: double.infinity,
+          height: 56,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: widget.loading
+                ? null
+                : const LinearGradient(
+                    begin: Alignment.topLeft, end: Alignment.bottomRight,
+                    colors: [Color(0xFF5B8BFC), Color(0xFF3A6BD4)],
+                  ),
+            color: widget.loading ? AppColors.surfaceLight : null,
+            boxShadow: widget.loading ? null : [
+              const BoxShadow(color: Color(0x664B7BEC), blurRadius: 16, offset: Offset(0, 4)),
+            ],
           ),
-        if (loading)
-          const SizedBox(width: 24, height: 24,
-              child: CircularProgressIndicator(color: AppColors.neonCyan, strokeWidth: 2.5))
-        else
-          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Text(isLogin ? '🔓' : '🚀', style: const TextStyle(fontSize: 20)),
-            const SizedBox(width: 10),
-            Text(isLogin ? 'GIOCA ORA' : 'CREA ACCOUNT',
-              style: const TextStyle(color: Colors.white, fontSize: 16,
-                  fontWeight: FontWeight.w900, letterSpacing: 2.5,
-                  shadows: [Shadow(color: Colors.black38, blurRadius: 4, offset: Offset(0, 2))])),
-          ]),
-      ]),
-    ),
-  );
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (!widget.loading)
+                Positioned(
+                  top: 0, left: 0, right: 0,
+                  child: Container(
+                    height: 26,
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft, end: Alignment.bottomRight,
+                        colors: [Colors.white.withOpacity(0.15), Colors.transparent],
+                      ),
+                    ),
+                  ),
+                ),
+              widget.loading
+                  ? const SizedBox(width: 22, height: 22,
+                      child: CircularProgressIndicator(color: AppColors.neonCyan, strokeWidth: 2.5))
+                  : Text(
+                      widget.isLogin ? 'ACCEDI' : 'CREA ACCOUNT',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 2,
+                        shadows: [Shadow(color: Colors.black26, blurRadius: 4)],
+                      ),
+                    ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

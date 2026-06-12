@@ -91,7 +91,7 @@ final _missionDefs = <_MissionDef>[
   ),
   _MissionDef(
     id: 'perm_earn_100k', title: 'Centomilionario',
-    description: 'Guadagna 100.000€ in totale',
+    description: 'Guadagna 🪙 100.000 in totale',
     emoji: '💎', type: MissionType.permanent, target: 100000, color: AppColors.legendary,
     coinsReward: 10000, gemsReward: 20,
   ),
@@ -233,7 +233,7 @@ class _MissionsScreenState extends ConsumerState<MissionsScreen>
             const SizedBox(width: 10),
             Text(
               '${def.title} completata!'
-              '${def.coinsReward > 0 ? "  +${_fmtV(def.coinsReward)}€" : ""}'
+              '${def.coinsReward > 0 ? "  +🪙 ${_fmtV(def.coinsReward)}" : ""}'
               '${def.gemsReward > 0 ? "  +${def.gemsReward}💎" : ""}',
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),

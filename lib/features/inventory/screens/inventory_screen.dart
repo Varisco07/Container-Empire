@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/models/item_model.dart';
 import '../../../core/services/inventory_service.dart';
 import '../../../core/services/service_locator.dart';
@@ -44,7 +45,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     setState(() { _selected.clear(); _selectMode = false; });
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Venduto per ${_fmt(total)}€!'),
+        content: Text('Venduto per 🪙 ${_fmt(total)}!'),
         backgroundColor: AppColors.success,
       ));
     }
@@ -58,7 +59,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     setState(() {});
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Venduto tutto: ${_fmt(total)}€'),
+        content: Text('Venduto tutto: 🪙 ${_fmt(total)}'),
         backgroundColor: AppColors.success,
       ));
     }
@@ -93,6 +94,12 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       appBar: AppBar(
         title: Text('INVENTARIO  ${inv.count}/${inv.isFull ? "PIENO" : "∞"}'),
         actions: [
+          // Bottone Fusione
+          IconButton(
+            icon: const Text('⚗️', style: TextStyle(fontSize: 18)),
+            tooltip: 'Fusione',
+            onPressed: () => context.push('/crafting'),
+          ),
           IconButton(
             icon: Icon(_selectMode ? Icons.close : Icons.checklist_rounded),
             onPressed: () => setState(() { _selectMode = !_selectMode; _selected.clear(); }),
@@ -182,11 +189,19 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text('📦', style: TextStyle(fontSize: 56)),
-                        const SizedBox(height: 12),
-                        const Text('Inventario vuoto', style: TextStyle(color: AppColors.textMuted, fontSize: 16)),
-                        const SizedBox(height: 6),
-                        Text('Apri un container!', style: TextStyle(color: AppColors.textMuted.withOpacity(0.6), fontSize: 13)),
+                        TweenAnimationBuilder<double>(
+                          tween: Tween(begin: 0.7, end: 1.0),
+                          duration: const Duration(milliseconds: 800),
+                          curve: Curves.elasticOut,
+                          builder: (_, v, child) => Transform.scale(scale: v, child: child),
+                          child: const Text('📦', style: TextStyle(fontSize: 72)),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text('Inventario vuoto',
+                            style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 8),
+                        const Text('Apri un container per iniziare!',
+                            style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
                       ],
                     ),
                   )

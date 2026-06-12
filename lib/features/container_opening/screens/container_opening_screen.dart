@@ -1,3 +1,4 @@
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -68,8 +69,9 @@ class _ContainerOpeningScreenState extends ConsumerState<ContainerOpeningScreen>
     final player = ps.localPlayer;
     if (player == null) return;
 
+
     if (!_container.isFree && player.coins < _container.cost) {
-      _showSnack('Monete insufficienti! Serve ${_fmt(_container.cost)}€', AppColors.error);
+      _showSnack('Monete insufficienti! Serve 🪙 ${_fmt(_container.cost)}', AppColors.error);
       return;
     }
 
@@ -94,7 +96,7 @@ class _ContainerOpeningScreenState extends ConsumerState<ContainerOpeningScreen>
 
     ref.read(playerNotifierProvider.notifier).refresh();
     setState(() { _isBusy = true; _revealedItem = item; _phase = OpeningPhase.roulette; });
-    await Future.delayed(const Duration(milliseconds: 1500));
+    await Future.delayed(const Duration(milliseconds: 5400));
     if (!mounted) return;
     setState(() => _phase = OpeningPhase.opening);
   }
@@ -131,7 +133,7 @@ class _ContainerOpeningScreenState extends ConsumerState<ContainerOpeningScreen>
       _showSnack(
         canAfford == 0
             ? 'Monete insufficienti!'
-            : 'Puoi aprire solo $canAfford container (hai ${_fmtShort(player.coins)}€)',
+            : 'Puoi aprire solo $canAfford container (hai 🪙 ${_fmtShort(player.coins)})',
         AppColors.error,
       );
       return;
@@ -182,7 +184,7 @@ class _ContainerOpeningScreenState extends ConsumerState<ContainerOpeningScreen>
     });
 
     // Wait for roulette animation to play
-    await Future.delayed(const Duration(milliseconds: 2200));
+    await Future.delayed(const Duration(milliseconds: 5400));
     if (!mounted) return;
 
     // Apply level-up overlay if needed
@@ -209,14 +211,14 @@ class _ContainerOpeningScreenState extends ConsumerState<ContainerOpeningScreen>
     if (_actionDone || _revealedItem == null) return;
     final value = await sl<InventoryService>().sellItem(_revealedItem!.id);
     ref.read(playerNotifierProvider.notifier).refresh();
-    setState(() { _actionDone = true; _actionMessage = '💰 Venduto: +${_fmtShort(value)}€'; });
+    setState(() { _actionDone = true; _actionMessage = '💰 Venduto: +🪙 ${_fmtShort(value)}'; });
   }
 
   Future<void> _multiSellAll() async {
     double total = 0;
     for (final item in _multiItems) total += await sl<InventoryService>().sellItem(item.id);
     ref.read(playerNotifierProvider.notifier).refresh();
-    _showSnack('💰 Venduto tutto: +${_fmtShort(total)}€', AppColors.coins);
+    _showSnack('💰 Venduto tutto: +🪙 ${_fmtShort(total)}', AppColors.coins);
     _reset();
   }
 
@@ -226,7 +228,7 @@ class _ContainerOpeningScreenState extends ConsumerState<ContainerOpeningScreen>
     final toSell = _multiItems.where((i) => i.rarity == Rarity.common || i.rarity == Rarity.uncommon).toList();
     for (final item in toSell) total += await inv.sellItem(item.id);
     ref.read(playerNotifierProvider.notifier).refresh();
-    _showSnack('💰 Venduti ${toSell.length} comuni (+${_fmtShort(total)}€), tenuti ${_multiItems.length - toSell.length} rari+', AppColors.coins);
+    _showSnack('💰 Venduti ${toSell.length} comuni (+🪙 ${_fmtShort(total)}), tenuti ${_multiItems.length - toSell.length} rari+', AppColors.coins);
     _reset();
   }
 
@@ -261,13 +263,34 @@ class _ContainerOpeningScreenState extends ConsumerState<ContainerOpeningScreen>
   }
 
   String _fmt(double v) {
-    if (v >= 1e6) return '${(v / 1e6).toStringAsFixed(0)}M€';
-    if (v >= 1e3) return '${(v / 1e3).toStringAsFixed(0)}K€';
-    return '${v.toStringAsFixed(0)}€';
+    if (v >= 1e6) return '🪙 ${(v / 1e6).toStringAsFixed(1)}M';
+    if (v >= 1e3) return '🪙 ${(v / 1e3).toStringAsFixed(0)}K';
+    return '🪙 ${v.toStringAsFixed(0)}';
   }
+
+  bool get _isAnimating =>
+      _phase == OpeningPhase.roulette ||
+      _phase == OpeningPhase.batchRoulette ||
+      _phase == OpeningPhase.opening;
 
   @override
   Widget build(BuildContext context) {
+    // Durante la roulette/apertura: schermo intero senza AppBar
+    if (_isAnimating) {
+      return Stack(
+        children: [
+          _buildBody(),
+          if (_showLevelUp)
+            _LevelUpOverlay(
+              level: _levelUpNewLevel,
+              coinsBonus: _levelUpCoins,
+              gemsBonus: _levelUpGems,
+              onDismiss: () => setState(() => _showLevelUp = false),
+            ),
+        ],
+      );
+    }
+
     return Stack(
       children: [
         Scaffold(
@@ -276,11 +299,7 @@ class _ContainerOpeningScreenState extends ConsumerState<ContainerOpeningScreen>
             title: Text(_container.name),
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_rounded),
-              onPressed: (_phase == OpeningPhase.idle ||
-                      _phase == OpeningPhase.reveal ||
-                      _phase == OpeningPhase.multiReveal)
-                  ? () => context.pop()
-                  : null, // disabled during animations
+              onPressed: () => context.pop(),
             ),
           ),
           body: _buildBody(),
@@ -428,7 +447,7 @@ class _LevelUpOverlay extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          _RewardChip('🪙', '+${_fmt(coinsBonus)}€', AppColors.coins),
+                          _RewardChip('🪙', '+${_fmt(coinsBonus)}', AppColors.coins),
                           _RewardChip('💎', '+$gemsBonus', AppColors.gems),
                         ],
                       ),
@@ -682,9 +701,9 @@ class _IdlePhase extends StatelessWidget {
 
   bool _isDark(Color c) => (c.red * 299 + c.green * 587 + c.blue * 114) / 1000 < 128;
   String _fmt(double v) {
-    if (v >= 1e6) return '${(v / 1e6).toStringAsFixed(1)}M€';
-    if (v >= 1e3) return '${(v / 1e3).toStringAsFixed(0)}K€';
-    return '${v.toStringAsFixed(0)}€';
+    if (v >= 1e6) return '🪙 ${(v / 1e6).toStringAsFixed(1)}M';
+    if (v >= 1e3) return '🪙 ${(v / 1e3).toStringAsFixed(0)}K';
+    return '🪙 ${v.toStringAsFixed(0)}';
   }
 }
 
@@ -806,10 +825,10 @@ class _MultiRevealPhase extends StatelessWidget {
   String _short(String k) => {'common': 'Comune', 'uncommon': 'NonCom.', 'rare': 'Raro',
       'epic': 'Epico', 'legendary': 'Legg.', 'mythic': 'Mitico', 'divine': 'Divino', 'secret': 'Seg.'}[k] ?? k;
   String _fmt(double v) {
-    if (v >= 1e9) return '${(v / 1e9).toStringAsFixed(1)}B€';
-    if (v >= 1e6) return '${(v / 1e6).toStringAsFixed(1)}M€';
-    if (v >= 1e3) return '${(v / 1e3).toStringAsFixed(1)}K€';
-    return '${v.toStringAsFixed(0)}€';
+    if (v >= 1e9) return '🪙 ${(v / 1e9).toStringAsFixed(1)}B';
+    if (v >= 1e6) return '🪙 ${(v / 1e6).toStringAsFixed(1)}M';
+    if (v >= 1e3) return '🪙 ${(v / 1e3).toStringAsFixed(1)}K';
+    return '🪙 ${v.toStringAsFixed(0)}';
   }
 }
 
@@ -875,10 +894,10 @@ class _MultiItemRow extends StatelessWidget {
   }
 
   String _fmt(double v) {
-    if (v >= 1e9) return '${(v / 1e9).toStringAsFixed(1)}B€';
-    if (v >= 1e6) return '${(v / 1e6).toStringAsFixed(1)}M€';
-    if (v >= 1e3) return '${(v / 1e3).toStringAsFixed(1)}K€';
-    return '${v.toStringAsFixed(0)}€';
+    if (v >= 1e9) return '🪙 ${(v / 1e9).toStringAsFixed(1)}B';
+    if (v >= 1e6) return '🪙 ${(v / 1e6).toStringAsFixed(1)}M';
+    if (v >= 1e3) return '🪙 ${(v / 1e3).toStringAsFixed(1)}K';
+    return '🪙 ${v.toStringAsFixed(0)}';
   }
 }
 
@@ -895,7 +914,7 @@ class _Badge extends StatelessWidget {
 
 // ─── Single Reveal ────────────────────────────────────────────────────────────
 
-class _RevealPhase extends StatelessWidget {
+class _RevealPhase extends StatefulWidget {
   final ItemModel item;
   final VoidCallback onKeep, onSell, onOpenAnother;
   final bool actionDone;
@@ -908,27 +927,68 @@ class _RevealPhase extends StatelessWidget {
   });
 
   @override
+  State<_RevealPhase> createState() => _RevealPhaseState();
+}
+
+class _RevealPhaseState extends State<_RevealPhase> {
+  late final ConfettiController _confetti;
+
+  static const _rareKeys = {'epic', 'legendary', 'mythic', 'divine', 'secret', 'cosmic'};
+  bool get _isRarePlus => _rareKeys.contains(widget.item.rarityKey);
+
+  @override
+  void initState() {
+    super.initState();
+    _confetti = ConfettiController(duration: const Duration(seconds: 3));
+    if (_isRarePlus) {
+      _confetti.play();
+      // Haptic feedback scalato sulla rarità
+      final key = widget.item.rarityKey;
+      if (key == 'divine' || key == 'secret' || key == 'cosmic') {
+        HapticFeedback.heavyImpact();
+        Future.delayed(const Duration(milliseconds: 200), HapticFeedback.heavyImpact);
+        Future.delayed(const Duration(milliseconds: 400), HapticFeedback.heavyImpact);
+      } else if (key == 'mythic' || key == 'legendary') {
+        HapticFeedback.heavyImpact();
+        Future.delayed(const Duration(milliseconds: 250), HapticFeedback.mediumImpact);
+      } else {
+        HapticFeedback.mediumImpact();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _confetti.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
-          child: Column(
-            children: [
-              ItemRevealCard(item: item)
-                  .animate()
-                  .scale(begin: const Offset(0.4, 0.4), duration: 600.ms, curve: Curves.elasticOut)
-                  .fadeIn(duration: 300.ms),
-              const SizedBox(height: 24),
-              // Viral share button for rare+ drops
-              if (shouldShowShare(item.rarityKey)) ...[
-                GestureDetector(
-                  onTap: () => ShareDropDialog.show(
-                    context,
-                    item: item,
-                    username: username,
-                    onDismiss: () => Navigator.of(context, rootNavigator: true).pop(),
-                  ),
+    final rarityColor = AppColors.rarityColor(widget.item.rarityKey);
+
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+              child: Column(
+                children: [
+                  ItemRevealCard(item: widget.item)
+                      .animate()
+                      .scale(begin: const Offset(0.4, 0.4), duration: 600.ms, curve: Curves.elasticOut)
+                      .fadeIn(duration: 300.ms),
+                  const SizedBox(height: 24),
+                  // Viral share button for rare+ drops
+                  if (shouldShowShare(widget.item.rarityKey)) ...[
+                    GestureDetector(
+                      onTap: () => ShareDropDialog.show(
+                        context,
+                        item: widget.item,
+                        username: widget.username,
+                        onDismiss: () => Navigator.of(context, rootNavigator: true).pop(),
+                      ),
                   child: Container(
                     width: double.infinity,
                     margin: const EdgeInsets.only(bottom: 12),
@@ -961,42 +1021,62 @@ class _RevealPhase extends StatelessWidget {
                   ),
                 ).animate(onPlay: (c) => c.repeat(reverse: true))
                   .shimmer(duration: 1500.ms, color: AppColors.neonPink.withOpacity(0.3)),
-              ],
-              if (!actionDone) ...[
-                Row(children: [
-                  Expanded(child: _RevBtn(label: 'TIENI', sublabel: 'In inventario', icon: '📦', color: AppColors.neonCyan, onTap: onKeep)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _RevBtn(label: 'VENDI', sublabel: '+${_fmt(item.finalValue)}€', icon: '💰', color: AppColors.coins, onTap: onSell)),
-                ]),
-              ] else ...[
-                Container(
-                  width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.neonCyan.withOpacity(0.3))),
-                  child: Text(actionMessage, textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppColors.neonCyan, fontSize: 16, fontWeight: FontWeight.w800)),
-                ),
-              ],
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: onOpenAnother,
-                  icon: const Text('🔄', style: TextStyle(fontSize: 16)),
-                  label: const Text('APRI UN ALTRO', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.neonCyan.withOpacity(0.12),
-                    foregroundColor: AppColors.neonCyan,
-                    side: const BorderSide(color: AppColors.neonCyan, width: 2),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), elevation: 0,
+                  ],
+                  if (!widget.actionDone) ...[
+                    Row(children: [
+                      Expanded(child: _RevBtn(label: 'TIENI', sublabel: 'In inventario', icon: '📦', color: AppColors.neonCyan, onTap: widget.onKeep)),
+                      const SizedBox(width: 12),
+                      Expanded(child: _RevBtn(label: 'VENDI', sublabel: '+🪙 ${_fmt(widget.item.finalValue)}', icon: '💰', color: AppColors.coins, onTap: widget.onSell)),
+                    ]),
+                  ] else ...[
+                    Container(
+                      width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 16),
+                      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.neonCyan.withOpacity(0.3))),
+                      child: Text(widget.actionMessage, textAlign: TextAlign.center,
+                          style: const TextStyle(color: AppColors.neonCyan, fontSize: 16, fontWeight: FontWeight.w800)),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: widget.onOpenAnother,
+                      icon: const Text('🔄', style: TextStyle(fontSize: 16)),
+                      label: const Text('APRI UN ALTRO', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.neonCyan.withOpacity(0.12),
+                        foregroundColor: AppColors.neonCyan,
+                        side: const BorderSide(color: AppColors.neonCyan, width: 2),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), elevation: 0,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
-      ),
+
+        // ── Confetti per item rari+ ───────────────────────────────────────────
+        if (_isRarePlus)
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: _confetti,
+              blastDirectionality: BlastDirectionality.explosive,
+              numberOfParticles: 22,
+              gravity: 0.3,
+              emissionFrequency: 0.06,
+              colors: [rarityColor, rarityColor.withOpacity(0.7), Colors.white, AppColors.neonGold],
+              strokeWidth: 1,
+              strokeColor: Colors.transparent,
+              maximumSize: const Size(14, 7),
+              minimumSize: const Size(8, 4),
+            ),
+          ),
+      ],
     );
   }
 

@@ -1,5 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/item_model.dart';
+import 'database_service.dart';
 import 'player_service.dart';
 
 enum SortMode { newest, oldest, valueDesc, valueAsc, rarityDesc }
@@ -7,18 +8,36 @@ enum FilterRarity { all, common, uncommon, rare, epic, legendary, mythic, divine
 
 class InventoryService {
   final PlayerService _playerService;
+  final DatabaseService _db = DatabaseService();
   Box<ItemModel>? _box;
+  String? _uid;
 
   InventoryService(this._playerService);
 
   String _boxName(String? uid) => uid != null ? 'inventory_$uid' : 'inventory_local';
 
   Future<void> init({String? uid}) async {
+    _uid = uid;
     final name = _boxName(uid);
     if (!Hive.isBoxOpen(name)) {
       _box = await Hive.openBox<ItemModel>(name);
     } else {
       _box = Hive.box<ItemModel>(name);
+    }
+
+    // Sincronizza inventario da Firestore al login
+    if (uid != null) {
+      try {
+        final remoteItems = await _db.loadInventory(uid);
+        if (remoteItems.isNotEmpty) {
+          await _box!.clear();
+          for (final item in remoteItems) {
+            await _box!.put(item.id, item);
+          }
+        }
+      } catch (_) {
+        // Offline — usa cache Hive
+      }
     }
   }
 
@@ -35,11 +54,13 @@ class InventoryService {
   Future<bool> addItem(ItemModel item) async {
     if (isFull) return false;
     await _box?.put(item.id, item);
+    if (_uid != null) _db.saveItem(_uid!, item).catchError((_) {});
     return true;
   }
 
   Future<void> removeItem(String id) async {
     await _box?.delete(id);
+    if (_uid != null) _db.deleteItem(_uid!, id).catchError((_) {});
   }
 
   Future<double> sellItem(String id) async {
@@ -47,6 +68,7 @@ class InventoryService {
     if (item == null || item.isLocked) return 0;
     final value = item.finalValue * (_playerService.localPlayer?.valueBoost ?? 1.0);
     await _box?.delete(id);
+    if (_uid != null) _db.deleteItem(_uid!, id).catchError((_) {});
     await _playerService.addCoins(value);
     await _playerService.incrementItemsSold();
     return value;

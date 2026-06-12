@@ -3,6 +3,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../models/item_model.dart';
 import '../models/player_model.dart';
 import 'auth_service.dart';
+import 'database_service.dart';
+import 'iap_service.dart';
 import 'inventory_service.dart';
 import 'player_service.dart';
 import 'rng_service.dart';
@@ -16,7 +18,10 @@ Future<void> setupServiceLocator() async {
   if (!Hive.isAdapterRegistered(0)) Hive.registerAdapter(ItemModelAdapter());
   if (!Hive.isAdapterRegistered(1)) Hive.registerAdapter(PlayerModelAdapter());
 
-  // AuthService (handles its own adapter registration)
+  // DatabaseService — layer Firestore
+  sl.registerSingleton<DatabaseService>(DatabaseService());
+
+  // AuthService
   final authService = AuthService();
   await authService.init();
   sl.registerSingleton<AuthService>(authService);
@@ -31,6 +36,11 @@ Future<void> setupServiceLocator() async {
   sl.registerSingleton<InventoryService>(inventoryService);
 
   sl.registerSingleton<RngService>(RngService());
+
+  // IapService — inizializzato e pronto all'uso
+  final iapService = IapService(playerService);
+  sl.registerSingleton<IapService>(iapService);
+  await iapService.init();
 }
 
 /// Chiamato dopo login/register per ricaricare i dati del nuovo utente

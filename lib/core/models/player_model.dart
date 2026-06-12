@@ -139,16 +139,9 @@ class PlayerModel extends HiveObject {
   double get xpRequired => 100 * (level * 1.5).ceilToDouble();
   double get xpProgress => xp / xpRequired;
 
-  bool get canClaimFreeContainer {
-    final diff = DateTime.now().difference(lastFreeContainerAt);
-    return diff.inHours >= 24;
-  }
+  bool get canClaimFreeContainer => true;
 
-  Duration get freeContainerCooldown {
-    final next = lastFreeContainerAt.add(const Duration(hours: 24));
-    final diff = next.difference(DateTime.now());
-    return diff.isNegative ? Duration.zero : diff;
-  }
+  Duration get freeContainerCooldown => Duration.zero;
 
   bool get canClaimDailyBonus {
     final diff = DateTime.now().difference(lastLoginAt);
