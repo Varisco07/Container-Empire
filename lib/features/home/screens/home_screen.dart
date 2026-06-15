@@ -130,33 +130,62 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   Widget _buildTitle() {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 2, top: 4),
+      padding: const EdgeInsets.only(bottom: 4, top: 6),
       child: Column(
         children: [
-          ShaderMask(
-            shaderCallback: (bounds) => const LinearGradient(
-              colors: [Color(0xFF7EC8E3), Color(0xFF4B7BEC), Color(0xFF9B59B6)],
-            ).createShader(bounds),
-            child: const Text(
-              '📦 CONTAINER EMPIRE',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-                letterSpacing: 2,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('📦', style: TextStyle(fontSize: 22)),
+              const SizedBox(width: 8),
+              ShaderMask(
+                shaderCallback: (bounds) => const LinearGradient(
+                  colors: [Color(0xFF7EC8E3), Color(0xFF4B7BEC), Color(0xFF9B59B6)],
+                ).createShader(bounds),
+                child: const Text(
+                  'CONTAINER EMPIRE',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 23,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: 2.5,
+                    shadows: [Shadow(color: Color(0x884B7BEC), blurRadius: 18)],
+                  ),
+                ),
               ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          // Linea luminosa decorativa
+          Container(
+            height: 2,
+            width: 150,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Colors.transparent, Color(0xFF4B7BEC), Colors.transparent],
+              ),
+              boxShadow: [BoxShadow(color: const Color(0xFF4B7BEC).withOpacity(0.6), blurRadius: 6)],
             ),
           ),
-          const SizedBox(height: 2),
-          const Text(
-            'Apri · Colleziona · Domina',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 10,
-              letterSpacing: 1.5,
-            ),
+          const SizedBox(height: 7),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Text('◆', style: TextStyle(color: Color(0xFF3A6BD4), fontSize: 7)),
+              SizedBox(width: 9),
+              Text(
+                'APRI · COLLEZIONA · DOMINA',
+                style: TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 10,
+                  letterSpacing: 2.2,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(width: 9),
+              Text('◆', style: TextStyle(color: Color(0xFF3A6BD4), fontSize: 7)),
+            ],
           ),
         ],
       ),
@@ -166,48 +195,154 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
 // ─── Clean Background ─────────────────────────────────────────────────────────
 
-class _CleanBackground extends StatelessWidget {
+class _CleanBackground extends StatefulWidget {
   final Color accentColor;
   const _CleanBackground({required this.accentColor});
 
   @override
+  State<_CleanBackground> createState() => _CleanBackgroundState();
+}
+
+class _CleanBackgroundState extends State<_CleanBackground>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c;
+  final Random _rnd = Random(11);
+  late final List<_Star> _stars;
+  late final List<_Ember> _embers;
+
+  @override
+  void initState() {
+    super.initState();
+    _c = AnimationController(vsync: this, duration: const Duration(seconds: 1200))..repeat();
+    _stars = List.generate(70, (_) => _Star(_rnd));
+    _embers = List.generate(22, (_) => _Ember(_rnd));
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return RepaintBoundary(
-      child: CustomPaint(
-        painter: _BgPainter(accentColor),
-        child: const SizedBox.expand(),
+      child: AnimatedBuilder(
+        animation: _c,
+        builder: (_, __) => CustomPaint(
+          painter: _BgPainter(_c.value * 1200, widget.accentColor, _stars, _embers),
+          child: const SizedBox.expand(),
+        ),
       ),
     );
   }
 }
 
+class _Star {
+  final double x, y, r, phase, speed;
+  _Star(Random r0)
+      : x = r0.nextDouble(),
+        y = r0.nextDouble(),
+        r = 0.4 + r0.nextDouble() * 1.4,
+        phase = r0.nextDouble() * 6.28,
+        speed = 0.5 + r0.nextDouble() * 1.5;
+}
+
+class _Ember {
+  final double x, size, speed, phase, drift;
+  _Ember(Random r0)
+      : x = r0.nextDouble(),
+        size = 1.0 + r0.nextDouble() * 2.2,
+        speed = 0.02 + r0.nextDouble() * 0.05,
+        phase = r0.nextDouble(),
+        drift = (r0.nextDouble() - 0.5) * 0.05;
+}
+
 class _BgPainter extends CustomPainter {
+  final double t;
   final Color accent;
-  _BgPainter(this.accent);
+  final List<_Star> stars;
+  final List<_Ember> embers;
+  _BgPainter(this.t, this.accent, this.stars, this.embers);
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Base gradient
-    final bg = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [Color(0xFF0A1628), Color(0xFF0D1E34), Color(0xFF0A1628)],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bg);
+    final w = size.width, h = size.height;
+    final rect = Offset.zero & size;
 
-    // Subtle accent radial at top center
-    final halo = Paint()
-      ..shader = RadialGradient(
-        center: const Alignment(0, -0.6),
-        radius: 0.7,
-        colors: [accent.withOpacity(0.07), Colors.transparent],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), halo);
+    // Base gradient profondo
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF0A1830), Color(0xFF0B1424), Color(0xFF070E1C)],
+        ).createShader(rect),
+    );
+
+    // Halo accent che respira in alto
+    final pulse = 0.5 + 0.5 * sin(t * 0.6);
+    final hc = Offset(w * 0.5, h * 0.15);
+    final haloR = h * 0.5 * (0.9 + pulse * 0.15);
+    canvas.drawCircle(
+      hc,
+      haloR,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [accent.withOpacity(0.12 + 0.05 * pulse), accent.withOpacity(0)],
+        ).createShader(Rect.fromCircle(center: hc, radius: haloR)),
+    );
+
+    // Stelle che brillano
+    final sp = Paint();
+    for (final s in stars) {
+      final tw = 0.3 + 0.7 * (0.5 + 0.5 * sin(t * s.speed + s.phase));
+      sp.color = Colors.white.withOpacity(tw * 0.55);
+      canvas.drawCircle(Offset(s.x * w, s.y * h * 0.78), s.r, sp);
+    }
+
+    // Griglia prospettica (pavimento cyber)
+    final horizon = h * 0.74;
+    final gp = Paint()..strokeWidth = 1;
+    for (int i = 0; i <= 6; i++) {
+      final f = i / 6.0;
+      final y = horizon + (h - horizon) * f * f;
+      gp.color = accent.withOpacity(0.13 * (1 - f));
+      canvas.drawLine(Offset(0, y), Offset(w, y), gp);
+    }
+    final vx = w * 0.5;
+    for (int i = -5; i <= 5; i++) {
+      gp.color = accent.withOpacity(0.07);
+      canvas.drawLine(Offset(vx + i * (w * 0.5), h), Offset(vx + i * (w * 0.12), horizon), gp);
+    }
+
+    // Braci che salgono
+    final ep = Paint()..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5);
+    for (final e in embers) {
+      final prog = (t * e.speed + e.phase) % 1.0;
+      final y = h * (1.02 - prog);
+      final x = (e.x + e.drift * sin(t * 0.4 + e.phase * 6)) * w;
+      final fade = sin(prog * pi);
+      ep.color = accent.withOpacity(fade * 0.5);
+      canvas.drawCircle(Offset(x, y), e.size, ep);
+    }
+
+    // Vignettatura
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = RadialGradient(
+          center: Alignment.center,
+          radius: 1.1,
+          colors: [Colors.transparent, Colors.black.withOpacity(0.4)],
+          stops: const [0.6, 1.0],
+        ).createShader(rect),
+    );
   }
 
   @override
-  bool shouldRepaint(_BgPainter old) => old.accent != accent;
+  bool shouldRepaint(_BgPainter old) => old.t != t || old.accent != accent;
 }
 
 // ─── Side menus ───────────────────────────────────────────────────────────────
@@ -265,33 +400,43 @@ class _SideItem extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: GestureDetector(
         onTap: () => context.go(route),
-        child: Container(
-          width: 48,
-          padding: const EdgeInsets.symmetric(vertical: 9),
-          decoration: BoxDecoration(
-            color: AppColors.surface.withOpacity(0.92),
-            borderRadius: BorderRadius.horizontal(
-              left: alignRight ? const Radius.circular(12) : Radius.zero,
-              right: alignRight ? Radius.zero : const Radius.circular(12),
-            ),
-            border: Border.all(color: color.withOpacity(0.25), width: 1),
+        child: ClipRRect(
+          borderRadius: BorderRadius.horizontal(
+            left: alignRight ? const Radius.circular(14) : Radius.zero,
+            right: alignRight ? Radius.zero : const Radius.circular(14),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: color, size: 19),
-              const SizedBox(height: 3),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: color.withOpacity(0.85),
-                  fontSize: 6.5,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.2,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              width: 50,
+              padding: const EdgeInsets.symmetric(vertical: 9),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [color.withOpacity(0.16), color.withOpacity(0.05)],
                 ),
+                border: Border.all(color: color.withOpacity(0.40), width: 1),
               ),
-            ],
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, color: color, size: 19,
+                      shadows: [Shadow(color: color.withOpacity(0.6), blurRadius: 8)]),
+                  const SizedBox(height: 3),
+                  Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: color.withOpacity(0.9),
+                      fontSize: 6.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -317,6 +462,7 @@ class _ContainerHero extends ConsumerWidget {
   static const _emojis = {
     'free': '📦', 'basic': '🗃️', 'industrial': '🏭',
     'military': '🪖', 'luxury': '👑', 'space': '🛸', 'quantum': '⚛️',
+    'cosmic': '🌌', 'galactic': '🌠', 'multiverse': '🪐', 'singularity': '⚫',
   };
 
   @override
@@ -458,56 +604,90 @@ class _ContainerBox extends StatelessWidget {
     return Stack(
       alignment: Alignment.center,
       children: [
-        // Subtle shadow behind box
+        // Alone esterno
         Container(
-          width: 180, height: 180,
+          width: 184, height: 184,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(26),
+            borderRadius: BorderRadius.circular(28),
             boxShadow: [
-              BoxShadow(color: color.withOpacity(0.20), blurRadius: 30, spreadRadius: 2),
+              BoxShadow(color: color.withOpacity(0.32), blurRadius: 42, spreadRadius: 4),
             ],
           ),
         ),
-        // Body
-        Container(
-          width: 170, height: 170,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
-            color: AppColors.surface,
-            border: Border.all(color: color.withOpacity(0.5), width: 2),
-          ),
-          child: Stack(
-            children: [
-              // Diagonal shine
-              Positioned(
-                top: 0, left: 0, right: 0,
-                child: Container(
-                  height: 80,
-                  decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Colors.white.withOpacity(0.13), Colors.transparent],
+        // Corpo vetro frostato
+        ClipRRect(
+          borderRadius: BorderRadius.circular(26),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+            child: Container(
+              width: 172, height: 172,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(26),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    color.withOpacity(0.30),
+                    AppColors.surface.withOpacity(0.55),
+                    const Color(0xFF0A1424).withOpacity(0.65),
+                  ],
+                ),
+                border: Border.all(color: color.withOpacity(0.6), width: 1.6),
+              ),
+              child: Stack(
+                children: [
+                  // Shine diagonale in alto
+                  Positioned(
+                    top: 0, left: 0, right: 0,
+                    child: Container(
+                      height: 80,
+                      decoration: BoxDecoration(
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Colors.white.withOpacity(0.20), Colors.transparent],
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-              // Emoji container
-              Center(
-                child: Text(
-                  emoji,
-                  style: TextStyle(
-                    fontSize: 75,
-                    shadows: [Shadow(color: color, blurRadius: 18)],
+                  // Glow radiale dietro l'emoji
+                  Center(
+                    child: Container(
+                      width: 124, height: 124,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(colors: [color.withOpacity(0.40), Colors.transparent]),
+                      ),
+                    ),
                   ),
-                ),
+                  // Emoji
+                  Center(
+                    child: Text(
+                      emoji,
+                      style: TextStyle(fontSize: 76, shadows: [Shadow(color: color, blurRadius: 22)]),
+                    ),
+                  ),
+                  // Angoli neon
+                  ..._brackets(color),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ],
     );
+  }
+
+  List<Widget> _brackets(Color c) {
+    BorderSide s() => BorderSide(color: c.withOpacity(0.85), width: 2);
+    const m = 12.0;
+    return [
+      Positioned(top: m, left: m, child: Container(width: 16, height: 16, decoration: BoxDecoration(border: Border(top: s(), left: s())))),
+      Positioned(top: m, right: m, child: Container(width: 16, height: 16, decoration: BoxDecoration(border: Border(top: s(), right: s())))),
+      Positioned(bottom: m, left: m, child: Container(width: 16, height: 16, decoration: BoxDecoration(border: Border(bottom: s(), left: s())))),
+      Positioned(bottom: m, right: m, child: Container(width: 16, height: 16, decoration: BoxDecoration(border: Border(bottom: s(), right: s())))),
+    ];
   }
 }
 
@@ -805,6 +985,7 @@ class _FeaturedSectionState extends ConsumerState<_FeaturedSection> {
   static const _emojis = {
     'free': '📦', 'basic': '🗃️', 'industrial': '🏭',
     'military': '🪖', 'luxury': '👑', 'space': '🛸', 'quantum': '⚛️',
+    'cosmic': '🌌', 'galactic': '🌠', 'multiverse': '🪐', 'singularity': '⚫',
   };
 
   @override
