@@ -239,11 +239,14 @@ class _TradeScreenState extends ConsumerState<TradeScreen> with SingleTickerProv
     );
     if (confirmed != true) return;
 
+    // Il compratore paga il prezzo pieno; il 7% è trattenuto dal sistema
     if (offer.priceType == TradeType.coins) {
       await ps.spendCoins(offer.priceCoins);
     } else {
       await ps.spendGems(offer.priceGems);
     }
+    // Nota: nelle offerte simulate il venditore riceve priceCoins * 0.93 (tassa 7%)
+    // Questo viene applicato lato server nelle offerte reali Firestore
 
     // Add item to inventory
     final inv = sl<InventoryService>();
@@ -811,18 +814,20 @@ class _CreateTradeTabState extends ConsumerState<_CreateTradeTab> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Valore stimato: 🪙 ${_fmt(item.finalValue)}  ·  Suggerito: 🪙 ${_fmt(item.finalValue * 0.75)}',
+          'Valore di vendita: 🪙 ${_fmt(item.finalValue)}  ·  Suggerito: 🪙 ${_fmt(item.finalValue * 1.2)}',
           style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
         ),
         const SizedBox(height: 4),
         Row(children: [
           const Icon(Icons.info_outline, size: 12, color: AppColors.neonOrange),
           const SizedBox(width: 4),
-          Text(
-            _priceType == TradeType.coins
-                ? 'Minimo: 🪙 ${_fmt(item.finalValue * 0.50)} (50% del valore)'
-                : 'Minimo: ${(item.finalValue / 10000).ceil().clamp(1, 999999)} 💎',
-            style: const TextStyle(color: AppColors.neonOrange, fontSize: 10),
+          Expanded(
+            child: Text(
+              _priceType == TradeType.coins
+                  ? 'Minimo: 🪙 ${_fmt(item.finalValue)} (non puoi vendere sotto il valore)  ·  Quota iscrizione: 🪙 100  ·  Tassa: 7%'
+                  : 'Minimo: ${(item.finalValue / 10000).ceil().clamp(1, 999999)} 💎  ·  Quota: 🪙 100  ·  Tassa: 7%',
+              style: const TextStyle(color: AppColors.neonOrange, fontSize: 10),
+            ),
           ),
         ]),
         const SizedBox(height: 24),
@@ -832,7 +837,7 @@ class _CreateTradeTabState extends ConsumerState<_CreateTradeTab> {
           width: double.infinity,
           height: 54,
           child: ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               final val = double.tryParse(_priceCtrl.text.trim());
               if (val == null || val <= 0) {
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -842,12 +847,14 @@ class _CreateTradeTabState extends ConsumerState<_CreateTradeTab> {
                 return;
               }
               final item = _selectedItem!;
+              const listingFee = 100.0;
               if (_priceType == TradeType.coins) {
-                final minCoins = item.finalValue * 0.50;
+                // REGOLA CRITICA: prezzo minimo = valore di vendita diretto dell'item
+                final minCoins = item.finalValue;
                 if (val < minCoins) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: Text(
-                      '❌ Prezzo troppo basso! Minimo 🪙 ${_fmt(minCoins)} (50% del valore)'),
+                      '❌ Non puoi vendere sotto il valore! Minimo 🪙 ${_fmt(minCoins)}'),
                     backgroundColor: AppColors.error,
                   ));
                   return;
@@ -862,7 +869,17 @@ class _CreateTradeTabState extends ConsumerState<_CreateTradeTab> {
                   return;
                 }
               }
-              final player = sl<PlayerService>().localPlayer;
+              final ps = sl<PlayerService>();
+              final player = ps.localPlayer;
+              // Addebita quota di iscrizione (100 monete)
+              if (player == null || player.coins < listingFee) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text('❌ Servono 🪙 100 di quota iscrizione'),
+                  backgroundColor: AppColors.error,
+                ));
+                return;
+              }
+              await ps.spendCoins(listingFee);
               widget.onPost(TradeOffer(
                 id: 'my_${DateTime.now().millisecondsSinceEpoch}',
                 sellerUsername: player?.username ?? 'Tu',

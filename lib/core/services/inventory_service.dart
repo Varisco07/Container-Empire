@@ -74,6 +74,46 @@ class InventoryService {
     return value;
   }
 
+  /// Smantella un item in Dust. Non vende, non dà monete.
+  /// Return: dust guadagnato. 0 se l'item è locked o non esiste.
+  Future<double> dismantleItem(String id) async {
+    final item = _box?.get(id);
+    if (item == null || item.isLocked) return 0;
+    double dust = _dustForRarity(item.rarityKey);
+    // Radioactive mutation: +50% dust bonus
+    if (item.mutationKey == 'radioactive') dust *= 1.5;
+    await _box?.delete(id);
+    if (_uid != null) _db.deleteItem(_uid!, id).catchError((_) {});
+    await _playerService.addDust(dust);
+    return dust;
+  }
+
+  /// Cambia la mutazione di un item (usato da Dust Screen per upgrade/reroll).
+  Future<void> upgradeMutation(String id, String newMutationKey) async {
+    final item = _box?.get(id);
+    if (item == null) return;
+    item.mutationKey = newMutationKey;
+    await item.save();
+    if (_uid != null) {
+      _db.saveItem(_uid!, item).catchError((_) {});
+    }
+  }
+
+  static double _dustForRarity(String rarityKey) {
+    switch (rarityKey) {
+      case 'common':    return 5;
+      case 'uncommon':  return 15;
+      case 'rare':      return 50;
+      case 'epic':      return 200;
+      case 'legendary': return 700;
+      case 'mythic':    return 2000;
+      case 'divine':    return 8000;
+      case 'secret':    return 30000;
+      case 'cosmic':    return 200000;
+      default:          return 5;
+    }
+  }
+
   Future<double> sellAll({bool skipLocked = true}) async {
     final ids = (_box?.values ?? [])
         .where((i) => !skipLocked || !i.isLocked)

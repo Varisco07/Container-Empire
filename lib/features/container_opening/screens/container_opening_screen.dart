@@ -1,13 +1,18 @@
+import 'dart:math';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/models/achievement_def.dart';
 import '../../../core/models/container_model.dart';
 import '../../../core/models/item_model.dart';
 import '../../../core/models/rarity.dart';
+import '../../../core/services/achievement_service.dart';
+import '../../../core/services/battle_pass_service.dart';
 import '../../../core/services/inventory_service.dart';
+import '../../../core/services/meta_service.dart';
 import '../../../core/services/player_service.dart';
 import '../../../core/services/rng_service.dart';
 import '../../../core/services/service_locator.dart';
@@ -17,6 +22,7 @@ import '../../../widgets/common/lucky_meter.dart';
 import '../../../widgets/common/neon_text.dart';
 import '../../../widgets/common/share_drop_dialog.dart';
 import '../game/container_animation_widget.dart';
+import '../widgets/cinematic_reveal_background.dart';
 import '../widgets/item_reveal_card.dart';
 import '../widgets/roulette_widget.dart';
 
@@ -61,6 +67,7 @@ class _ContainerOpeningScreenState extends ConsumerState<ContainerOpeningScreen>
   static const _emojis = {
     'free': '📦', 'basic': '🗃️', 'industrial': '🏭',
     'military': '🪖', 'luxury': '👑', 'space': '🛸', 'quantum': '⚛️',
+    'cosmic': '🌌', 'galactic': '🌠', 'multiverse': '🌀', 'singularity': '⚫',
   };
 
   Future<void> _startOpening() async {
@@ -108,8 +115,11 @@ class _ContainerOpeningScreenState extends ConsumerState<ContainerOpeningScreen>
 
   Future<void> _saveItem() async {
     if (_revealedItem == null) return;
-    await sl<InventoryService>().addItem(_revealedItem!);
-    final result = await sl<PlayerService>().incrementContainersOpened();
+    final item = _revealedItem!;
+    await sl<InventoryService>().addItem(item);
+    final ps = sl<PlayerService>();
+    final result = await ps.incrementContainersOpened();
+    sl<BattlePassService>().addXp(10);
     ref.read(playerNotifierProvider.notifier).refresh();
     if (result.didLevelUp && mounted) {
       setState(() {
@@ -118,6 +128,47 @@ class _ContainerOpeningScreenState extends ConsumerState<ContainerOpeningScreen>
         _levelUpCoins = result.coinsBonus;
         _levelUpGems = result.gemsBonus;
       });
+    }
+
+    // Mastery tracking
+    final meta = MetaService();
+    await meta.incrementMastery(_container.id);
+    final masteryTier = meta.masteryTier(_container.id);
+    final masteryLabel = meta.masteryLabel(_container.id);
+    // Show mastery milestone if tier just changed
+    final opens = meta.masteryProgress[_container.id] ?? 0;
+    final milestones = [10, 100, 500, 2000, 10000];
+    if (milestones.contains(opens) && mounted) {
+      _showSnack('🎖️ Mastery ${_container.name}: $masteryLabel!', AppColors.neonGold);
+    }
+
+    // ─── Functional Mutations ─────────────────────────────────────
+    await _applyMutationEffects(item, ps);
+
+    // Achievements
+    final player = ps.localPlayer;
+    if (player != null) {
+      final newAchievements = await sl<AchievementService>().onContainerOpened(
+        player: player, item: item, isBatch: false, batchSize: 1,
+      );
+      if (mounted && newAchievements.isNotEmpty) {
+        for (final a in newAchievements) {
+          _showSnack('🏆 Achievement: ${a.title}!', AppColors.neonGold);
+          await Future.delayed(const Duration(milliseconds: 300));
+        }
+      }
+    }
+
+    // Secret container (1/500 chance)
+    final rng = sl<RngService>();
+    if (rng.rollSecretContainer() && player != null && mounted) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      final shadowItem = rng.rollShadowItem(player: player);
+      await sl<InventoryService>().addItem(shadowItem);
+      await sl<AchievementService>().onSecretContainerFound();
+      if (mounted) {
+        _showShadowContainerDialog(shadowItem);
+      }
     }
   }
 
@@ -172,6 +223,7 @@ class _ContainerOpeningScreenState extends ConsumerState<ContainerOpeningScreen>
       if (lu.didLevelUp) lastLevelUp = lu;
       items.add(item);
     }
+    sl<BattlePassService>().addXp(10 * _quantity);
 
     // Pick best item (highest value) to show in roulette preview
     final bestItem = items.reduce((a, b) => a.finalValue > b.finalValue ? a : b);
@@ -248,10 +300,151 @@ class _ContainerOpeningScreenState extends ConsumerState<ContainerOpeningScreen>
     });
   }
 
+  /// Applies functional mutation effects when an item is obtained.
+  Future<void> _applyMutationEffects(ItemModel item, PlayerService ps) async {
+    switch (item.mutationKey) {
+      case 'golden':
+        // +10% XP bonus on obtain
+        // +10% XP bonus based on rarity tier (same as PlayerService XP calculation)
+        final baseXp = 10.0 + item.rarity.index * 5.0;
+        await ps.addXp(baseXp * 0.10);
+        if (mounted) _showSnack('✨ Golden: +10% XP bonus!', const Color(0xFFFFD700));
+        break;
+      case 'diamond':
+        // +5% luck boost for next 10 opens (temporary, stored in RngService)
+        sl<RngService>().applyTemporaryLuck(0.05, 10);
+        if (mounted) _showSnack('💎 Diamond: +5% Fortuna per 10 aperture!', const Color(0xFF00BFFF));
+        break;
+      case 'radioactive':
+        // Radioactive dust bonus is applied in dismantleItem (+50% dust)
+        // Just notify the player
+        if (mounted) _showSnack('☢️ Radioactive: +50% Dust se smantellato!', const Color(0xFF7FFF00));
+        break;
+      case 'galaxy':
+        // 3% chance to duplicate the item
+        if (Random().nextDouble() < 0.03) {
+          final duplicate = ItemModel(
+            id: 'dup_${DateTime.now().millisecondsSinceEpoch}',
+            name: item.name,
+            category: item.category,
+            rarityKey: item.rarityKey,
+            mutationKey: 'none', // duplicate has no mutation
+            baseValue: item.baseValue,
+            iconAsset: item.iconAsset,
+            obtainedAt: DateTime.now(),
+            containerId: item.containerId,
+          );
+          await sl<InventoryService>().addItem(duplicate);
+          if (mounted) _showSnack('🌌 Galaxy: Item DUPLICATO!', const Color(0xFF9370DB));
+        }
+        break;
+      case 'voidMutation':
+        // Add 1 Cosmic Fragment to inventory
+        final fragment = ItemModel(
+          id: 'void_${DateTime.now().millisecondsSinceEpoch}',
+          name: 'Frammento Cosmico',
+          category: 'Quantum',
+          rarityKey: 'secret',
+          mutationKey: 'none',
+          baseValue: 5000,
+          iconAsset: '',
+          obtainedAt: DateTime.now(),
+          containerId: 'void',
+        );
+        await sl<InventoryService>().addItem(fragment);
+        if (mounted) _showSnack('🕳️ Void: Frammento Cosmico ottenuto!', const Color(0xFF6A0DAD));
+        break;
+    }
+  }
+
   void _showSnack(String msg, Color color) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(msg), backgroundColor: color, duration: const Duration(seconds: 2)),
+    );
+  }
+
+  void _showShadowContainerDialog(ItemModel item) {
+    final rarityColor = AppColors.rarityColor(item.rarityKey);
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (_) => Dialog(
+        backgroundColor: const Color(0xFF05080F),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: const BorderSide(color: Color(0xFF00FFFF), width: 1.5),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ShaderMask(
+                shaderCallback: (b) => const LinearGradient(
+                  colors: [Color(0xFF00FFFF), Color(0xFF8B7FF0)],
+                ).createShader(b),
+                child: const Text('👻 CONTAINER OMBRA', style: TextStyle(
+                  color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 2,
+                )),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Hai trovato un container segreto!\nProbabilità: 1 su 500',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: rarityColor.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: rarityColor.withOpacity(0.5)),
+                  boxShadow: [BoxShadow(color: rarityColor.withOpacity(0.3), blurRadius: 30)],
+                ),
+                child: Column(children: [
+                  Text(item.name, style: TextStyle(
+                    color: rarityColor, fontSize: 20, fontWeight: FontWeight.w900)),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: rarityColor.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: rarityColor.withOpacity(0.6)),
+                    ),
+                    child: Text(
+                      item.rarity.displayName.toUpperCase(),
+                      style: TextStyle(color: rarityColor, fontWeight: FontWeight.w900,
+                          fontSize: 12, letterSpacing: 2),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text('🪙 ${_fmtShort(item.finalValue)}', style: TextStyle(
+                    color: AppColors.coins, fontSize: 22, fontWeight: FontWeight.w900,
+                    shadows: [Shadow(color: AppColors.coins.withOpacity(0.5), blurRadius: 10)],
+                  )),
+                ]),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF00FFFF),
+                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: const Text('INCREDIBILE!', style: TextStyle(
+                    fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -399,7 +592,9 @@ class _LevelUpOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return DefaultTextStyle(
+      style: const TextStyle(decoration: TextDecoration.none, fontFamily: 'Rajdhani'),
+      child: GestureDetector(
       onTap: onDismiss,
       child: Container(
         color: Colors.black.withOpacity(0.85),
@@ -425,7 +620,8 @@ class _LevelUpOverlay extends StatelessWidget {
                 const SizedBox(height: 16),
                 const Text('LEVEL UP!',
                     style: TextStyle(color: AppColors.neonCyan, fontSize: 28, fontWeight: FontWeight.w900,
-                        letterSpacing: 4, shadows: [Shadow(color: AppColors.neonCyan, blurRadius: 20)]))
+                        letterSpacing: 4, decoration: TextDecoration.none,
+                        shadows: [Shadow(color: AppColors.neonCyan, blurRadius: 20)]))
                     .animate().fadeIn().scale(begin: const Offset(0.6, 0.6), curve: Curves.elasticOut),
                 const SizedBox(height: 8),
                 ShaderMask(
@@ -433,7 +629,8 @@ class _LevelUpOverlay extends StatelessWidget {
                     colors: [AppColors.neonCyan, AppColors.neonPurple],
                   ).createShader(r),
                   child: Text('LIVELLO $level',
-                      style: const TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.w900)),
+                      style: const TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.w900,
+                          decoration: TextDecoration.none)),
                 ).animate().fadeIn(delay: 200.ms),
                 const SizedBox(height: 20),
                 Container(
@@ -442,7 +639,8 @@ class _LevelUpOverlay extends StatelessWidget {
                   child: Column(
                     children: [
                       const Text('RICOMPENSE',
-                          style: TextStyle(color: AppColors.textMuted, fontSize: 11, letterSpacing: 2)),
+                          style: TextStyle(color: AppColors.textMuted, fontSize: 11, letterSpacing: 2,
+                              decoration: TextDecoration.none)),
                       const SizedBox(height: 12),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -456,14 +654,15 @@ class _LevelUpOverlay extends StatelessWidget {
                 ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0),
                 const SizedBox(height: 24),
                 Text('Tocca per continuare',
-                    style: TextStyle(color: AppColors.textMuted.withOpacity(0.6), fontSize: 12))
+                    style: TextStyle(color: AppColors.textMuted.withOpacity(0.6), fontSize: 12,
+                        decoration: TextDecoration.none))
                     .animate(onPlay: (c) => c.repeat(reverse: true)).fadeIn(duration: 800.ms),
               ],
             ),
           ).animate().scale(begin: const Offset(0.7, 0.7), curve: Curves.elasticOut, duration: 600.ms),
         ),
       ),
-    );
+    )); // chiude DefaultTextStyle
   }
 
   String _fmt(double v) {
@@ -488,9 +687,10 @@ class _RewardChip extends StatelessWidget {
         border: Border.all(color: color.withOpacity(0.5)),
       ),
       child: Row(children: [
-        Text(icon, style: const TextStyle(fontSize: 20)),
+        Text(icon, style: const TextStyle(fontSize: 20, decoration: TextDecoration.none)),
         const SizedBox(width: 8),
-        Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 16)),
+        Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 16,
+            decoration: TextDecoration.none)),
       ]),
     );
   }
@@ -517,7 +717,9 @@ class _IdlePhase extends StatelessWidget {
   Widget build(BuildContext context) {
     final totalCost = container.cost * quantity;
 
-    return SingleChildScrollView(
+    return DefaultTextStyle(
+      style: const TextStyle(decoration: TextDecoration.none, fontFamily: 'Rajdhani'),
+      child: SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
@@ -657,7 +859,8 @@ class _IdlePhase extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ), // chiude SingleChildScrollView
+    ); // chiude DefaultTextStyle
   }
 
   void _showQtyDialog(BuildContext ctx, int current, ValueChanged<int> onChanged, Color color) {
@@ -746,7 +949,9 @@ class _MultiRevealPhase extends StatelessWidget {
     final rareCounts = <String, int>{};
     for (final item in items) rareCounts[item.rarityKey] = (rareCounts[item.rarityKey] ?? 0) + 1;
 
-    return Column(
+    return DefaultTextStyle(
+      style: const TextStyle(decoration: TextDecoration.none, fontFamily: 'Rajdhani'),
+      child: Column(
       children: [
         Container(
           margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -815,12 +1020,14 @@ class _MultiRevealPhase extends StatelessWidget {
           ]),
         ),
       ],
-    );
+    ), // chiude Column
+    ); // chiude DefaultTextStyle
   }
 
   static const _emojis = {
     'free': '📦', 'basic': '🗃️', 'industrial': '🏭',
     'military': '🪖', 'luxury': '👑', 'space': '🛸', 'quantum': '⚛️',
+    'cosmic': '🌌', 'galactic': '🌠', 'multiverse': '🌀', 'singularity': '⚫',
   };
   String _short(String k) => {'common': 'Comune', 'uncommon': 'NonCom.', 'rare': 'Raro',
       'epic': 'Epico', 'legendary': 'Legg.', 'mythic': 'Mitico', 'divine': 'Divino', 'secret': 'Seg.'}[k] ?? k;
@@ -967,8 +1174,17 @@ class _RevealPhaseState extends State<_RevealPhase> {
   Widget build(BuildContext context) {
     final rarityColor = AppColors.rarityColor(widget.item.rarityKey);
 
-    return Stack(
+    return DefaultTextStyle(
+      style: const TextStyle(decoration: TextDecoration.none, fontFamily: 'Rajdhani'),
+      child: Stack(
       children: [
+        // Sfondo cinematografico colorato per rarità
+        Positioned.fill(
+          child: CinematicRevealBackground(
+            color: rarityColor,
+            intensity: _isRarePlus ? 1.0 : 0.45,
+          ),
+        ),
         SingleChildScrollView(
           child: Center(
             child: Padding(
@@ -1077,7 +1293,8 @@ class _RevealPhaseState extends State<_RevealPhase> {
             ),
           ),
       ],
-    );
+    ), // chiude Stack
+    ); // chiude DefaultTextStyle
   }
 
   String _fmt(double v) {

@@ -118,7 +118,8 @@ class _AvatarSection extends StatelessWidget {
                 child: Center(
                   child: Text(
                     initial,
-                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900),
+                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900,
+                        decoration: TextDecoration.none),
                   ),
                 ),
               ),
@@ -134,7 +135,8 @@ class _AvatarSection extends StatelessWidget {
                   ),
                   child: Text(
                     '$level',
-                    style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w900),
+                    style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w900,
+                        decoration: TextDecoration.none),
                   ),
                 ),
               ),
@@ -153,13 +155,15 @@ class _AvatarSection extends StatelessWidget {
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 0.3,
+                decoration: TextDecoration.none,
               ),
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 2),
             Text(
               '${_fmtXp(xp)} / ${_fmtXp(xpReq)} XP',
-              style: const TextStyle(color: AppColors.textMuted, fontSize: 9),
+              style: const TextStyle(color: AppColors.textMuted, fontSize: 9,
+                  decoration: TextDecoration.none),
             ),
           ],
         ),
@@ -202,7 +206,7 @@ class _CurrencyPill extends StatelessWidget {
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(emoji, style: const TextStyle(fontSize: 14)),
+        Text(emoji, style: const TextStyle(fontSize: 14, decoration: TextDecoration.none)),
         const SizedBox(width: 5),
         Text(
           label,
@@ -211,6 +215,7 @@ class _CurrencyPill extends StatelessWidget {
             fontSize: 13,
             fontWeight: FontWeight.w900,
             letterSpacing: 0.3,
+            decoration: TextDecoration.none,
           ),
         ),
       ],

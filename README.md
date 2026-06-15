@@ -248,9 +248,11 @@ I drop rate sono valori base. Il motore RNG applica luck boost, prestige bonus, 
 | 2 — Progressione & Social | ✅ Completato | Missioni, upgrade, crafting, clan, trade, leaderboard |
 | 3 — Backend & Auth | ✅ Completato | Firebase Auth, Firestore sync, Google Sign-In, leaderboard reale |
 | 4 — UI Premium | ✅ Completato | Animazioni, podio, pill nav, glow, confetti, haptic |
-| 5 — Monetizzazione | 🔄 In corso | IAP gem pack, VIP Pass, Battle Pass, rewarded ads |
-| 6 — Release | ⏳ Pianificato | Asset finali, tutorial, onboarding, Play Store / App Store |
-| 7 — Post-Launch | ⏳ Pianificato | Eventi stagionali, tornei, aste, clan wars |
+| 5 — Economia Avanzata | ✅ Completato | Dust System, Trade tax 7% + listing fee, Achievement System, Collections |
+| 6 — RNG Avanzato | ✅ Completato | Container Ombra (1/500), Mutazioni funzionali, Mastery per container |
+| 7 — Monetizzazione | 🔄 In corso | IAP gem pack, VIP Pass, rewarded ads |
+| 8 — Release | ⏳ Pianificato | Asset finali, tutorial, onboarding, Play Store / App Store |
+| 9 — Post-Launch | ⏳ Pianificato | Battle Pass, eventi stagionali, tornei, aste, clan wars |
 
 ---
 

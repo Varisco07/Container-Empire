@@ -22,6 +22,22 @@ const _itemEmojis = {
   'Quantum Processor': '💻', 'Materia Oscura Campione': '🕳️',
   'Singolarità Compressa': '🌌', 'Frammento Big Bang': '💥',
   'Ω Omega Particle': '⚛️',
+  // Cosmic
+  'Polvere Cosmica': '✨', 'Cristallo di Plasma': '🔮', 'Reliquia Stellare': '🌟',
+  'Frammento di Cometa': '☄️', 'Cuore di Supernova': '💥', 'Essenza del Vuoto': '🕳️',
+  'Lacrima della Galassia': '💧', 'Fenice Eterna': '🔥',
+  // Galactic
+  'Gas Nebulare': '🌫️', 'Lega Galattica': '🔩', 'Nucleo di Pulsar': '🌀',
+  'Anello di Saturno': '🪐', 'Frammento di Quasar': '💫', 'Corona Galattica': '👑',
+  'Sigillo delle Stelle': '⭐', 'Trono Galattico': '👑',
+  // Multiverse
+  'Eco Dimensionale': '🔊', 'Scheggia di Realtà': '🔷', 'Chiave Interdimensionale': '🗝️',
+  'Specchio dei Paralleli': '🪞', 'Nodo del Multiverso': '🕸️', 'Codice della Creazione': '📜',
+  'Occhio dell\'Infinito': '👁️', 'Cuore del Multiverso': '💠',
+  // Singularity
+  'Frammento di Orizzonte': '🌑', 'Materia Degenerata': '⚫', 'Filamento Gravitazionale': '〰️',
+  'Nucleo di Buco Nero': '⚫', 'Radiazione di Hawking': '☢️', 'Punto di Singolarità': '🕳️',
+  'Origine del Tempo': '⏳', 'Big Bang Compresso': '💥',
 };
 
 class ItemRevealCard extends StatelessWidget {

@@ -100,6 +100,9 @@ class PlayerModel extends HiveObject {
   @HiveField(29)
   double prestigeLuckBonus; // +0.15 luck per prestige level, permanent
 
+  @HiveField(30)
+  double dust;
+
   PlayerModel({
     required this.uid,
     required this.username,
@@ -131,6 +134,7 @@ class PlayerModel extends HiveObject {
     this.mutationBoost = 1.0,
     this.prestigeLevel = 0,
     this.prestigeLuckBonus = 0.0,
+    this.dust = 0,
   })  : lastFreeContainerAt = lastFreeContainerAt ?? DateTime(2000),
         lastLoginAt = lastLoginAt ?? DateTime(2000);
 

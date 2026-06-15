@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/models/achievement_def.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/services/meta_service.dart';
 import '../../../core/services/player_service.dart';
 import '../../../core/services/service_locator.dart';
 import '../../../core/theme/app_colors.dart';
@@ -79,6 +82,74 @@ class ProfileScreen extends ConsumerWidget {
 
             const SizedBox(height: 24),
 
+            // Economy: Dust
+            _QuickLinkCard(
+              emoji: '🌫️',
+              title: 'Alchimia Dust',
+              description: 'Smantella item, usa il Dust per upgrade e ticket',
+              color: const Color(0xFF8B7FF0),
+              trailing: p.dust > 0
+                  ? Text('${_fmtDust(p.dust)} 🌫️',
+                      style: const TextStyle(color: Color(0xFFB8A5FF), fontWeight: FontWeight.w900))
+                  : null,
+              onTap: () => context.push('/dust'),
+            ),
+            const SizedBox(height: 8),
+
+            // Achievement
+            _QuickLinkCard(
+              emoji: '🏆',
+              title: 'Achievement',
+              description: 'Traguardi sbloccati e titoli guadagnati',
+              color: AppColors.neonGold,
+              trailing: Text(
+                '${MetaService().unlockedAchievements.length}/${AchievementDefs.all.length}',
+                style: const TextStyle(color: AppColors.neonGold, fontWeight: FontWeight.w900, fontSize: 13),
+              ),
+              onTap: () => context.push('/achievements'),
+            ),
+            const SizedBox(height: 8),
+
+            // Collections
+            _QuickLinkCard(
+              emoji: '📚',
+              title: 'Collezioni',
+              description: 'Set di item da completare per ricompense esclusive',
+              color: AppColors.neonCyan,
+              onTap: () => context.push('/collections'),
+            ),
+            const SizedBox(height: 8),
+
+            // Equipped title
+            if (MetaService().equippedTitle.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.neonPurple.withOpacity(0.07),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.neonPurple.withOpacity(0.4)),
+                ),
+                child: Row(children: [
+                  const Text('🏷️', style: TextStyle(fontSize: 20)),
+                  const SizedBox(width: 10),
+                  Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    const Text('Titolo equipaggiato', style: TextStyle(
+                      color: AppColors.textMuted, fontSize: 10)),
+                    Text(MetaService().equippedTitle, style: const TextStyle(
+                      color: AppColors.neonPurple, fontSize: 15, fontWeight: FontWeight.w900)),
+                  ]),
+                  const Spacer(),
+                  if (MetaService().unlockedTitles.length > 1)
+                    TextButton(
+                      onPressed: () => _showTitleSelector(context),
+                      child: const Text('Cambia', style: TextStyle(
+                        color: AppColors.textMuted, fontSize: 11)),
+                    ),
+                ]),
+              ),
+
+            const SizedBox(height: 24),
+
             // Prestige section
             _PrestigeSection(player: p),
 
@@ -92,11 +163,132 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+  static String _fmtDust(double v) {
+    if (v >= 1e6) return '${(v / 1e6).toStringAsFixed(1)}M';
+    if (v >= 1e3) return '${(v / 1e3).toStringAsFixed(1)}K';
+    return v.toStringAsFixed(0);
+  }
+
+  static void _showTitleSelector(BuildContext context) {
+    final meta = MetaService();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          border: Border(top: BorderSide(color: AppColors.neonPurple, width: 1.5)),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(child: Container(width: 44, height: 4,
+              decoration: BoxDecoration(color: AppColors.neonPurple.withOpacity(0.4),
+                borderRadius: BorderRadius.circular(2)))),
+            const SizedBox(height: 16),
+            const Text('Scegli titolo', style: TextStyle(
+              color: AppColors.textPrimary, fontWeight: FontWeight.w900, fontSize: 16)),
+            const SizedBox(height: 12),
+            ...meta.unlockedTitles.map((t) => GestureDetector(
+              onTap: () async {
+                await meta.equipTitle(t);
+                if (context.mounted) Navigator.pop(context);
+              },
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: meta.equippedTitle == t
+                      ? AppColors.neonPurple.withOpacity(0.15)
+                      : AppColors.background,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: meta.equippedTitle == t ? AppColors.neonPurple : AppColors.border,
+                  ),
+                ),
+                child: Row(children: [
+                  const Text('🏷️ ', style: TextStyle(fontSize: 16)),
+                  Text(t, style: TextStyle(
+                    color: meta.equippedTitle == t ? AppColors.neonPurple : AppColors.textPrimary,
+                    fontWeight: FontWeight.w800, fontSize: 14,
+                  )),
+                  if (meta.equippedTitle == t) ...[
+                    const Spacer(),
+                    const Icon(Icons.check_circle, color: AppColors.neonPurple, size: 18),
+                  ],
+                ]),
+              ),
+            )),
+          ],
+        ),
+      ),
+    );
+  }
+
   String _fmt(double v) {
     if (v >= 1e9) return '🪙 ${(v / 1e9).toStringAsFixed(1)}B';
     if (v >= 1e6) return '🪙 ${(v / 1e6).toStringAsFixed(1)}M';
     if (v >= 1e3) return '🪙 ${(v / 1e3).toStringAsFixed(0)}K';
     return '🪙 ${v.toStringAsFixed(0)}';
+  }
+}
+
+// ─── Quick link card ──────────────────────────────────────────────────────────
+
+class _QuickLinkCard extends StatelessWidget {
+  final String emoji, title, description;
+  final Color color;
+  final VoidCallback onTap;
+  final Widget? trailing;
+
+  const _QuickLinkCard({
+    required this.emoji, required this.title, required this.description,
+    required this.color, required this.onTap, this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Row(children: [
+          Container(
+            width: 44, height: 44,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: color.withOpacity(0.5)),
+            ),
+            child: Center(child: Text(emoji, style: const TextStyle(fontSize: 22))),
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: TextStyle(
+                color: color, fontWeight: FontWeight.w800, fontSize: 14)),
+              Text(description, style: const TextStyle(
+                color: AppColors.textMuted, fontSize: 11)),
+            ],
+          )),
+          if (trailing != null) ...[
+            const SizedBox(width: 8),
+            trailing!,
+          ],
+          const SizedBox(width: 4),
+          const Icon(Icons.arrow_forward_ios_rounded, color: AppColors.textMuted, size: 14),
+        ]),
+      ),
+    );
   }
 }
 

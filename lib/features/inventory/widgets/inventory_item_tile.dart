@@ -29,6 +29,7 @@ class InventoryItemTile extends StatefulWidget {
   final VoidCallback? onTap;
   final VoidCallback onLock;
   final VoidCallback onSell;
+  final VoidCallback? onDismantle;
 
   const InventoryItemTile({
     super.key,
@@ -37,6 +38,7 @@ class InventoryItemTile extends StatefulWidget {
     required this.onLock,
     required this.onSell,
     this.onTap,
+    this.onDismantle,
   });
 
   @override
@@ -326,7 +328,7 @@ class _InventoryItemTileState extends State<InventoryItemTile> {
             ),
             const SizedBox(height: 24),
 
-            // Action buttons
+            // Action buttons row 1
             Row(
               children: [
                 Expanded(
@@ -349,10 +351,38 @@ class _InventoryItemTileState extends State<InventoryItemTile> {
                 ),
               ],
             ),
+            if (widget.onDismantle != null) ...[
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: _ActionBtn(
+                  label: '🌫️ Smantella → ${_dustAmountLabel(widget.item.rarityKey)} Dust',
+                  color: const Color(0xFF8B7FF0),
+                  outlined: true,
+                  enabled: !widget.item.isLocked,
+                  onTap: () { widget.onDismantle!(); Navigator.pop(context); },
+                ),
+              ),
+            ],
           ],
         ),
       ),
     );
+  }
+
+  String _dustAmountLabel(String rarityKey) {
+    switch (rarityKey) {
+      case 'common':    return '5';
+      case 'uncommon':  return '15';
+      case 'rare':      return '50';
+      case 'epic':      return '200';
+      case 'legendary': return '700';
+      case 'mythic':    return '2.000';
+      case 'divine':    return '8.000';
+      case 'secret':    return '30.000';
+      case 'cosmic':    return '200.000';
+      default:          return '5';
+    }
   }
 
   String _fmt(double v) {

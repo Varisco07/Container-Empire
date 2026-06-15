@@ -151,6 +151,21 @@ class PlayerService {
     await savePlayer(player);
   }
 
+  Future<void> addDust(double amount) async {
+    final player = localPlayer;
+    if (player == null) return;
+    player.dust += amount;
+    await savePlayer(player);
+  }
+
+  Future<bool> spendDust(double amount) async {
+    final player = localPlayer;
+    if (player == null || player.dust < amount) return false;
+    player.dust -= amount;
+    await savePlayer(player);
+    return true;
+  }
+
   Future<void> activateVip() async {
     final player = localPlayer;
     if (player == null) return;

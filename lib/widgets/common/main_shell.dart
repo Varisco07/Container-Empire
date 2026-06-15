@@ -10,6 +10,7 @@ class MainShell extends ConsumerWidget {
 
   static const _tabs = [
     _TabItem(icon: Icons.home_rounded,        emoji: '🏠', label: 'Home',       path: '/'),
+    _TabItem(icon: Icons.location_city_rounded, emoji: '🌆', label: 'Impero',   path: '/empire'),
     _TabItem(icon: Icons.inventory_2_rounded, emoji: '📦', label: 'Inventario', path: '/inventory'),
     _TabItem(icon: Icons.swap_horiz_rounded,  emoji: '🔄', label: 'Trade',      path: '/trade'),
     _TabItem(icon: Icons.person_rounded,      emoji: '👤', label: 'Profilo',    path: '/profile'),
@@ -96,42 +97,16 @@ class _BottomNavState extends State<_BottomNav> with SingleTickerProviderStateMi
         color: AppColors.navBackground,
         border: const Border(top: BorderSide(color: AppColors.border, width: 1)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.35), blurRadius: 24, offset: const Offset(0, -4)),
+          BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 30, offset: const Offset(0, -6)),
+          BoxShadow(color: AppColors.neonCyan.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, -2)),
         ],
       ),
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: 68,
+          height: 62,
           child: Stack(
             children: [
-              // ── Sliding pill indicator ──────────────────────────────
-              AnimatedBuilder(
-                animation: _pillAnim,
-                builder: (_, __) {
-                  final w = MediaQuery.of(context).size.width / count;
-                  final fromX = _prevIndex * w + 12;
-                  final toX   = widget.currentIndex * w + 12;
-                  final x = fromX + (toX - fromX) * _pillAnim.value;
-                  return Positioned(
-                    top: 8,
-                    left: x,
-                    child: Container(
-                      width: w - 24,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: AppColors.neonCyan.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.neonCyan.withOpacity(0.35), width: 1),
-                        boxShadow: [
-                          BoxShadow(color: AppColors.neonCyan.withOpacity(0.15), blurRadius: 12),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-
               // ── Tab items ───────────────────────────────────────────
               Row(
                 children: List.generate(count, (i) {
@@ -213,8 +188,24 @@ class _NavItemState extends State<_NavItem> with SingleTickerProviderStateMixin 
             fontSize: widget.isActive ? 10 : 9,
             fontWeight: widget.isActive ? FontWeight.w800 : FontWeight.w400,
             letterSpacing: widget.isActive ? 0.3 : 0,
+            decoration: TextDecoration.none,
+            decorationColor: Colors.transparent,
           ),
           child: Text(widget.tab.label),
+        ),
+        const SizedBox(height: 3),
+        // Dot indicator
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: widget.isActive ? 18 : 0,
+          height: 2.5,
+          decoration: BoxDecoration(
+            color: AppColors.neonCyan,
+            borderRadius: BorderRadius.circular(2),
+            boxShadow: widget.isActive
+                ? [BoxShadow(color: AppColors.neonCyan.withOpacity(0.6), blurRadius: 6)]
+                : null,
+          ),
         ),
       ],
     );

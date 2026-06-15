@@ -13,10 +13,15 @@ import 'routes/app_router.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inizializza Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  // Inizializza Firebase — non bloccante: se la config è placeholder o manca
+  // la connessione, l'app continua in modalità locale (Hive).
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint('⚠️ Firebase init saltato, modalità locale: $e');
+  }
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -40,7 +45,9 @@ class _ContainerEmpireAppState extends ConsumerState<ContainerEmpireApp> {
   @override
   void initState() {
     super.initState();
-    _authenticated = sl<AuthService>().isLoggedIn;
+    // PREVIEW_EMPIRE (dart-define, default off): salta l'auth per screenshot/dev.
+    _authenticated =
+        const bool.fromEnvironment('PREVIEW_EMPIRE') || sl<AuthService>().isLoggedIn;
   }
 
   Widget _wrap(Widget content) {
@@ -53,15 +60,23 @@ class _ContainerEmpireAppState extends ConsumerState<ContainerEmpireApp> {
           final screenW = MediaQuery.of(ctx).size.width;
           final isWide = screenW > 520;
           final appW = isWide ? 430.0 : screenW;
-          return Container(
-            color: const Color(0xFF020609),
-            child: isWide
-                ? Row(children: [
-                    Expanded(child: Container(color: const Color(0xFF020609))),
-                    SizedBox(width: appW, child: content),
-                    Expanded(child: Container(color: const Color(0xFF020609))),
-                  ])
-                : content,
+          // Wrap globale: elimina underline da testi web (GestureDetector eredita da browser)
+          return DefaultTextStyle(
+            style: const TextStyle(
+              fontFamily: 'Rajdhani',
+              decoration: TextDecoration.none,
+              decorationColor: Colors.transparent,
+            ),
+            child: Container(
+              color: const Color(0xFF020609),
+              child: isWide
+                  ? Row(children: [
+                      Expanded(child: Container(color: const Color(0xFF020609))),
+                      SizedBox(width: appW, child: content),
+                      Expanded(child: Container(color: const Color(0xFF020609))),
+                    ])
+                  : content,
+            ),
           );
         },
       ),
@@ -85,15 +100,23 @@ class _ContainerEmpireAppState extends ConsumerState<ContainerEmpireApp> {
         final screenW = MediaQuery.of(context).size.width;
         final isWide = screenW > 520;
         final appW = isWide ? 430.0 : screenW;
-        return Container(
-          color: const Color(0xFF020609),
-          child: isWide
-              ? Row(children: [
-                  Expanded(child: Container(color: const Color(0xFF020609))),
-                  SizedBox(width: appW, child: child!),
-                  Expanded(child: Container(color: const Color(0xFF020609))),
-                ])
-              : child!,
+        // Wrap globale: elimina underline da testi web
+        return DefaultTextStyle(
+          style: const TextStyle(
+            fontFamily: 'Rajdhani',
+            decoration: TextDecoration.none,
+            decorationColor: Colors.transparent,
+          ),
+          child: Container(
+            color: const Color(0xFF020609),
+            child: isWide
+                ? Row(children: [
+                    Expanded(child: Container(color: const Color(0xFF020609))),
+                    SizedBox(width: appW, child: child!),
+                    Expanded(child: Container(color: const Color(0xFF020609))),
+                  ])
+                : child!,
+          ),
         );
       },
     );

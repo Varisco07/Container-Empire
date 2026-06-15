@@ -1,7 +1,10 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// Run: dart run build_runner build
 
 part of 'player_model.dart';
+
+// **************************************************************************
+// TypeAdapterGenerator
+// **************************************************************************
 
 class PlayerModelAdapter extends TypeAdapter<PlayerModel> {
   @override
@@ -16,41 +19,42 @@ class PlayerModelAdapter extends TypeAdapter<PlayerModel> {
     return PlayerModel(
       uid: fields[0] as String,
       username: fields[1] as String,
-      coins: (fields[2] as num?)?.toDouble() ?? 1000,
-      gems: (fields[3] as num?)?.toInt() ?? 5,
-      level: (fields[4] as num?)?.toInt() ?? 1,
-      xp: (fields[5] as num?)?.toDouble() ?? 0,
-      totalContainersOpened: (fields[6] as num?)?.toInt() ?? 0,
-      totalEarned: (fields[7] as num?)?.toDouble() ?? 0,
-      inventorySlots: (fields[8] as num?)?.toInt() ?? 50,
-      isVip: fields[9] as bool? ?? false,
-      luckBoost: (fields[10] as num?)?.toDouble() ?? 1.0,
-      speedBoost: (fields[11] as num?)?.toDouble() ?? 1.0,
-      valueBoost: (fields[12] as num?)?.toDouble() ?? 1.0,
-      autoOpenEnabled: fields[13] as bool? ?? false,
-      autoSellEnabled: fields[14] as bool? ?? false,
-      lastFreeContainerAt: fields[15] as DateTime? ?? DateTime(2000),
-      luckUpgradeLevel: (fields[16] as num?)?.toInt() ?? 0,
-      valueUpgradeLevel: (fields[17] as num?)?.toInt() ?? 0,
-      slotsUpgradeLevel: (fields[18] as num?)?.toInt() ?? 0,
-      mutationUpgradeLevel: (fields[19] as num?)?.toInt() ?? 0,
-      autoOpenUpgradeLevel: (fields[20] as num?)?.toInt() ?? 0,
-      autoSellUpgradeLevel: (fields[21] as num?)?.toInt() ?? 0,
-      dailyLoginStreak: (fields[22] as num?)?.toInt() ?? 0,
-      lastLoginAt: fields[23] as DateTime? ?? DateTime(2000),
-      pityCounter: (fields[24] as num?)?.toInt() ?? 0,
-      totalItemsSold: (fields[25] as num?)?.toInt() ?? 0,
-      totalRaresFound: (fields[26] as num?)?.toInt() ?? 0,
-      mutationBoost: (fields[27] as num?)?.toDouble() ?? 1.0,
-      prestigeLevel: (fields[28] as num?)?.toInt() ?? 0,
-      prestigeLuckBonus: (fields[29] as num?)?.toDouble() ?? 0.0,
+      coins: fields[2] as double,
+      gems: fields[3] as int,
+      level: fields[4] as int,
+      xp: fields[5] as double,
+      totalContainersOpened: fields[6] as int,
+      totalEarned: fields[7] as double,
+      inventorySlots: fields[8] as int,
+      isVip: fields[9] as bool,
+      luckBoost: fields[10] as double,
+      speedBoost: fields[11] as double,
+      valueBoost: fields[12] as double,
+      autoOpenEnabled: fields[13] as bool,
+      autoSellEnabled: fields[14] as bool,
+      lastFreeContainerAt: fields[15] as DateTime?,
+      luckUpgradeLevel: fields[16] as int,
+      valueUpgradeLevel: fields[17] as int,
+      slotsUpgradeLevel: fields[18] as int,
+      mutationUpgradeLevel: fields[19] as int,
+      autoOpenUpgradeLevel: fields[20] as int,
+      autoSellUpgradeLevel: fields[21] as int,
+      dailyLoginStreak: fields[22] as int,
+      lastLoginAt: fields[23] as DateTime?,
+      pityCounter: fields[24] as int,
+      totalItemsSold: fields[25] as int,
+      totalRaresFound: fields[26] as int,
+      mutationBoost: fields[27] as double,
+      prestigeLevel: fields[28] as int,
+      prestigeLuckBonus: fields[29] as double,
+      dust: fields[30] as double,
     );
   }
 
   @override
   void write(BinaryWriter writer, PlayerModel obj) {
     writer
-      ..writeByte(30)
+      ..writeByte(31)
       ..writeByte(0)
       ..write(obj.uid)
       ..writeByte(1)
@@ -110,7 +114,9 @@ class PlayerModelAdapter extends TypeAdapter<PlayerModel> {
       ..writeByte(28)
       ..write(obj.prestigeLevel)
       ..writeByte(29)
-      ..write(obj.prestigeLuckBonus);
+      ..write(obj.prestigeLuckBonus)
+      ..writeByte(30)
+      ..write(obj.dust);
   }
 
   @override

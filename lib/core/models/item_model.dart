@@ -18,7 +18,7 @@ class ItemModel extends HiveObject {
   final String rarityKey;
 
   @HiveField(4)
-  final String mutationKey;
+  String mutationKey; // non-final: modificabile da upgrade/reroll Dust
 
   @HiveField(5)
   final double baseValue;

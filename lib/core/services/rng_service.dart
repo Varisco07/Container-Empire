@@ -18,6 +18,27 @@ class RngService {
   double eventLuckMultiplier = 1.0;
   double eventMutationMultiplier = 1.0;
 
+  // Temporary luck boosts from mutations (Diamond mutation)
+  double _tempLuckBonus = 0.0;
+  int _tempLuckRemainingOpens = 0;
+
+  /// Apply a temporary luck bonus for N opens (Diamond mutation effect).
+  void applyTemporaryLuck(double bonus, int opens) {
+    _tempLuckBonus += bonus;
+    _tempLuckRemainingOpens += opens;
+  }
+
+  double get _effectiveTempLuck {
+    if (_tempLuckRemainingOpens <= 0) return 0;
+    _tempLuckRemainingOpens--;
+    if (_tempLuckRemainingOpens <= 0) {
+      final b = _tempLuckBonus;
+      _tempLuckBonus = 0;
+      return b;
+    }
+    return _tempLuckBonus;
+  }
+
   /// Roll a complete item from the container loot table.
   /// Returns (item, isPityActivated)
   ItemModel rollItem({
@@ -25,7 +46,8 @@ class RngService {
     required PlayerModel player,
     bool forcedRare = false, // pity system: force at least rare
   }) {
-    final effectiveLuck = player.luckBoost * eventLuckMultiplier * (player.isVip ? 1.5 : 1.0);
+    final tempLuck = _effectiveTempLuck;
+    final effectiveLuck = (player.luckBoost + tempLuck) * eventLuckMultiplier * (player.isVip ? 1.5 : 1.0);
     final effectiveMutation = player.mutationBoost * eventMutationMultiplier * (player.isVip ? 2.0 : 1.0);
 
     final entry = _rollLootEntry(container.lootTable, effectiveLuck, forcedRare: forcedRare);
@@ -96,6 +118,44 @@ class RngService {
     }
     return Mutation.none;
   }
+
+  /// Probabilità di trovare un Container Ombra (1/500 per apertura).
+  /// Ritorna true se il giocatore ha trovato il container segreto.
+  bool rollSecretContainer() => _random.nextInt(500) == 0;
+
+  /// Genera un item speciale dal Container Ombra (solo Epic+).
+  ItemModel rollShadowItem({required PlayerModel player}) {
+    // Crea una loot table virtuale con solo item Epic+
+    final shadowTable = _shadowLootTable;
+    final idx = _random.nextInt(shadowTable.length);
+    final entry = shadowTable[idx];
+    final mutation = _rollMutation(player.mutationBoost * 2.0); // double mutation chance
+    return ItemModel(
+      id: _uuid.v4(),
+      name: entry.$1,
+      category: 'Shadow Vault',
+      rarityKey: entry.$2,
+      mutationKey: mutation.name,
+      baseValue: entry.$3,
+      iconAsset: '',
+      obtainedAt: DateTime.now(),
+      containerId: 'shadow',
+    );
+  }
+
+  static const _shadowLootTable = [
+    ('Cristallo Alieno',            'epic',      180.0),
+    ('Stardust Vial',               'epic',      180.0),
+    ('Esoscheletro Prototipo',      'epic',      180.0),
+    ('Orologio Rolex',              'legendary', 300.0),
+    ('Borsa Hermès',                'legendary', 300.0),
+    ('Corona Reale',                'legendary', 300.0),
+    ('Satellite Disattivato',       'mythic',    800.0),
+    ('Nucleo di Stella di Neutroni','mythic',    800.0),
+    ('Bit Quantistico',             'divine',   2000.0),
+    ('Quantum Processor',           'divine',   2000.0),
+    ('Ω Omega Particle',            'secret',  10000.0),
+  ];
 
   /// Check if rarity counts as "rare+" for pity reset purposes
   bool isRarePlus(String rarityKey) {

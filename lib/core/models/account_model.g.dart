@@ -21,7 +21,7 @@ class AccountModelAdapter extends TypeAdapter<AccountModel> {
       username: fields[1] as String,
       passwordHash: fields[2] as String,
       createdAt: fields[3] as DateTime,
-      email: fields[4] as String? ?? '',
+      email: fields[4] as String,
     );
   }
 

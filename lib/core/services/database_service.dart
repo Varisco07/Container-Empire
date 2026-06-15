@@ -154,6 +154,7 @@ class DatabaseService {
     'autoSellUpgradeLevel':   p.autoSellUpgradeLevel,
     'prestigeLevel':          p.prestigeLevel,
     'prestigeLuckBonus':      p.prestigeLuckBonus,
+    'dust':                   p.dust,
     'updatedAt':              DateTime.now().toIso8601String(),
   };
 
@@ -189,6 +190,7 @@ class DatabaseService {
       autoSellUpgradeLevel:  (m['autoSellUpgradeLevel'] as num?)?.toInt() ?? 0,
       prestigeLevel:         (m['prestigeLevel'] as num?)?.toInt() ?? 0,
       prestigeLuckBonus:     (m['prestigeLuckBonus'] as num?)?.toDouble() ?? 0,
+      dust:                  (m['dust'] as num?)?.toDouble() ?? 0,
     );
   }
 

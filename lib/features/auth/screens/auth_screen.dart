@@ -253,6 +253,12 @@ class _AuthScreenState extends State<AuthScreen> {
     _userCtrl.clear(); _passCtrl.clear(); _emailCtrl.clear();
   });
 
+  // Entra senza account: gioco in locale (Hive), nessun backend richiesto.
+  Future<void> _continueAsGuest() async {
+    await sl<PlayerService>().loadOrCreate(username: 'Ospite', uid: 'local');
+    if (mounted) widget.onAuthenticated();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -464,6 +470,21 @@ class _AuthScreenState extends State<AuthScreen> {
                     style: const TextStyle(color: AppColors.neonCyan, fontWeight: FontWeight.w800),
                   ),
                 ])),
+              ),
+              const SizedBox(height: 14),
+              GestureDetector(
+                onTap: _continueAsGuest,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.neonCyan.withOpacity(0.3)),
+                  ),
+                  child: const Text('Entra come ospite →',
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w700)),
+                ),
               ),
             ]),
           ),

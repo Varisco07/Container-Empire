@@ -1,7 +1,10 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// Run: dart run build_runner build
 
 part of 'item_model.dart';
+
+// **************************************************************************
+// TypeAdapterGenerator
+// **************************************************************************
 
 class ItemModelAdapter extends TypeAdapter<ItemModel> {
   @override

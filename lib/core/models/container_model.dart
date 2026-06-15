@@ -138,6 +138,54 @@ final List<ContainerModel> containerCatalog = [
     animationAsset: 'assets/animations/container_quantum.json',
     lootTable: _buildLootTable('quantum'),
   ),
+  // COSMIC — costo 10M€
+  ContainerModel(
+    id: 'cosmic',
+    name: 'COSMIC CONTAINER',
+    description: 'Materia primordiale e reliquie nate prima delle stelle.',
+    cost: 10000000,
+    colorHex: '#FF4DD2',
+    iconAsset: 'assets/images/container_quantum.png',
+    animationAsset: 'assets/animations/container_quantum.json',
+    lootTable: _buildLootTable('cosmic'),
+    levelRequired: 1,
+  ),
+  // GALACTIC — costo 100M€
+  ContainerModel(
+    id: 'galactic',
+    name: 'GALACTIC CONTAINER',
+    description: 'Tesori raccolti da intere galassie conquistate.',
+    cost: 100000000,
+    colorHex: '#9B6BFF',
+    iconAsset: 'assets/images/container_quantum.png',
+    animationAsset: 'assets/animations/container_quantum.json',
+    lootTable: _buildLootTable('galactic'),
+    levelRequired: 1,
+  ),
+  // MULTIVERSE — costo 1B€
+  ContainerModel(
+    id: 'multiverse',
+    name: 'MULTIVERSE CONTAINER',
+    description: 'Oggetti che esistono in infinite realtà parallele.',
+    cost: 1000000000,
+    colorHex: '#00E5C7',
+    iconAsset: 'assets/images/container_quantum.png',
+    animationAsset: 'assets/animations/container_quantum.json',
+    lootTable: _buildLootTable('multiverse'),
+    levelRequired: 1,
+  ),
+  // SINGULARITY — costo 10B€ — il container definitivo
+  ContainerModel(
+    id: 'singularity',
+    name: 'SINGULARITY CONTAINER',
+    description: 'Il punto in cui tutta la ricchezza dell\'universo collassa.',
+    cost: 10000000000,
+    colorHex: '#FFE14D',
+    iconAsset: 'assets/images/container_quantum.png',
+    animationAsset: 'assets/animations/container_quantum.json',
+    lootTable: _buildLootTable('singularity'),
+    levelRequired: 1,
+  ),
 ];
 
 List<LootEntry> _buildLootTable(String containerId) {
@@ -236,6 +284,54 @@ List<LootEntry> _buildLootTable(String containerId) {
       LootEntry(itemName: 'Fenice Cosmica',          itemCategory: 'Cosmico',        iconAsset: '', baseValue: 150000, rarity: Rarity.cosmic,   weight: 0.00001),
       LootEntry(itemName: 'Cristallo dell\'Universo',itemCategory: 'Cosmico',        iconAsset: '', baseValue: 150000, rarity: Rarity.cosmic,   weight: 0.000005),
       LootEntry(itemName: 'Singolarità Primordiale', itemCategory: 'Cosmico',        iconAsset: '', baseValue: 150000, rarity: Rarity.cosmic,   weight: 0.000003),
+    ],
+
+    // ── COSMIC (costo 10.000.000€) ────────────────────────────────────────────
+    'cosmic': [
+      LootEntry(itemName: 'Polvere Cosmica',        itemCategory: 'Cosmico', iconAsset: '', baseValue: 1500000, rarity: Rarity.common,    weight: 45),
+      LootEntry(itemName: 'Cristallo di Plasma',    itemCategory: 'Cosmico', iconAsset: '', baseValue: 1500000, rarity: Rarity.uncommon,  weight: 30),
+      LootEntry(itemName: 'Reliquia Stellare',      itemCategory: 'Cosmico', iconAsset: '', baseValue: 1500000, rarity: Rarity.rare,      weight: 18),
+      LootEntry(itemName: 'Frammento di Cometa',    itemCategory: 'Cosmico', iconAsset: '', baseValue: 1500000, rarity: Rarity.epic,      weight: 5),
+      LootEntry(itemName: 'Cuore di Supernova',     itemCategory: 'Cosmico', iconAsset: '', baseValue: 1500000, rarity: Rarity.legendary, weight: 1.5),
+      LootEntry(itemName: 'Essenza del Vuoto',      itemCategory: 'Cosmico', iconAsset: '', baseValue: 1500000, rarity: Rarity.divine,    weight: 0.4),
+      LootEntry(itemName: 'Lacrima della Galassia', itemCategory: 'Cosmico', iconAsset: '', baseValue: 1500000, rarity: Rarity.secret,    weight: 0.1),
+      LootEntry(itemName: 'Fenice Eterna',          itemCategory: 'Cosmico', iconAsset: '', baseValue: 1500000, rarity: Rarity.cosmic,    weight: 0.00001),
+    ],
+
+    // ── GALACTIC (costo 100.000.000€) ─────────────────────────────────────────
+    'galactic': [
+      LootEntry(itemName: 'Gas Nebulare',        itemCategory: 'Galattico', iconAsset: '', baseValue: 15000000, rarity: Rarity.common,    weight: 45),
+      LootEntry(itemName: 'Lega Galattica',      itemCategory: 'Galattico', iconAsset: '', baseValue: 15000000, rarity: Rarity.uncommon,  weight: 30),
+      LootEntry(itemName: 'Nucleo di Pulsar',    itemCategory: 'Galattico', iconAsset: '', baseValue: 15000000, rarity: Rarity.rare,      weight: 18),
+      LootEntry(itemName: 'Anello di Saturno',   itemCategory: 'Galattico', iconAsset: '', baseValue: 15000000, rarity: Rarity.epic,      weight: 5),
+      LootEntry(itemName: 'Frammento di Quasar', itemCategory: 'Galattico', iconAsset: '', baseValue: 15000000, rarity: Rarity.legendary, weight: 1.5),
+      LootEntry(itemName: 'Corona Galattica',    itemCategory: 'Galattico', iconAsset: '', baseValue: 15000000, rarity: Rarity.divine,    weight: 0.4),
+      LootEntry(itemName: 'Sigillo delle Stelle',itemCategory: 'Galattico', iconAsset: '', baseValue: 15000000, rarity: Rarity.secret,    weight: 0.1),
+      LootEntry(itemName: 'Trono Galattico',     itemCategory: 'Galattico', iconAsset: '', baseValue: 15000000, rarity: Rarity.cosmic,    weight: 0.00001),
+    ],
+
+    // ── MULTIVERSE (costo 1.000.000.000€) ─────────────────────────────────────
+    'multiverse': [
+      LootEntry(itemName: 'Eco Dimensionale',         itemCategory: 'Multiverso', iconAsset: '', baseValue: 150000000, rarity: Rarity.common,    weight: 45),
+      LootEntry(itemName: 'Scheggia di Realtà',       itemCategory: 'Multiverso', iconAsset: '', baseValue: 150000000, rarity: Rarity.uncommon,  weight: 30),
+      LootEntry(itemName: 'Chiave Interdimensionale', itemCategory: 'Multiverso', iconAsset: '', baseValue: 150000000, rarity: Rarity.rare,      weight: 18),
+      LootEntry(itemName: 'Specchio dei Paralleli',   itemCategory: 'Multiverso', iconAsset: '', baseValue: 150000000, rarity: Rarity.epic,      weight: 5),
+      LootEntry(itemName: 'Nodo del Multiverso',      itemCategory: 'Multiverso', iconAsset: '', baseValue: 150000000, rarity: Rarity.legendary, weight: 1.5),
+      LootEntry(itemName: 'Codice della Creazione',   itemCategory: 'Multiverso', iconAsset: '', baseValue: 150000000, rarity: Rarity.divine,    weight: 0.4),
+      LootEntry(itemName: 'Occhio dell\'Infinito',    itemCategory: 'Multiverso', iconAsset: '', baseValue: 150000000, rarity: Rarity.secret,    weight: 0.1),
+      LootEntry(itemName: 'Cuore del Multiverso',     itemCategory: 'Multiverso', iconAsset: '', baseValue: 150000000, rarity: Rarity.cosmic,    weight: 0.00001),
+    ],
+
+    // ── SINGULARITY (costo 10.000.000.000€) — il container definitivo ─────────
+    'singularity': [
+      LootEntry(itemName: 'Frammento di Orizzonte',    itemCategory: 'Singolarità', iconAsset: '', baseValue: 1500000000, rarity: Rarity.common,    weight: 45),
+      LootEntry(itemName: 'Materia Degenerata',        itemCategory: 'Singolarità', iconAsset: '', baseValue: 1500000000, rarity: Rarity.uncommon,  weight: 30),
+      LootEntry(itemName: 'Filamento Gravitazionale',  itemCategory: 'Singolarità', iconAsset: '', baseValue: 1500000000, rarity: Rarity.rare,      weight: 18),
+      LootEntry(itemName: 'Nucleo di Buco Nero',       itemCategory: 'Singolarità', iconAsset: '', baseValue: 1500000000, rarity: Rarity.epic,      weight: 5),
+      LootEntry(itemName: 'Radiazione di Hawking',     itemCategory: 'Singolarità', iconAsset: '', baseValue: 1500000000, rarity: Rarity.legendary, weight: 1.5),
+      LootEntry(itemName: 'Punto di Singolarità',      itemCategory: 'Singolarità', iconAsset: '', baseValue: 1500000000, rarity: Rarity.divine,    weight: 0.4),
+      LootEntry(itemName: 'Origine del Tempo',         itemCategory: 'Singolarità', iconAsset: '', baseValue: 1500000000, rarity: Rarity.secret,    weight: 0.1),
+      LootEntry(itemName: 'Big Bang Compresso',        itemCategory: 'Singolarità', iconAsset: '', baseValue: 1500000000, rarity: Rarity.cosmic,    weight: 0.00001),
     ],
   };
   return tables[containerId] ?? tables['free']!;

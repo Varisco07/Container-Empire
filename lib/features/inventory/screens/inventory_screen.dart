@@ -5,6 +5,7 @@ import '../../../core/models/item_model.dart';
 import '../../../core/services/inventory_service.dart';
 import '../../../core/services/service_locator.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/snack_helper.dart';
 import '../../../features/profile/providers/player_provider.dart';
 import '../widgets/inventory_item_tile.dart';
 
@@ -232,6 +233,15 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                           await sl<InventoryService>().sellItem(item.id);
                           ref.read(playerNotifierProvider.notifier).refresh();
                           setState(() {});
+                        },
+                        onDismantle: () async {
+                          final dust = await sl<InventoryService>().dismantleItem(item.id);
+                          ref.read(playerNotifierProvider.notifier).refresh();
+                          setState(() {});
+                          if (context.mounted && dust > 0) {
+                            showSnack(context, '🌫️ +${dust.toStringAsFixed(0)} Dust ottenuti!',
+                                type: SnackType.info);
+                          }
                         },
                       );
                     },

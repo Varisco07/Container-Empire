@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../features/home/screens/home_screen.dart';
+import '../features/tycoon/screens/empire_screen.dart';
+import '../features/battlepass/screens/battle_pass_screen.dart';
 import '../features/container_opening/screens/container_opening_screen.dart';
 import '../features/inventory/screens/inventory_screen.dart';
 import '../features/shop/screens/shop_screen.dart';
@@ -11,25 +13,33 @@ import '../features/clan/screens/clan_screen.dart';
 import '../features/leaderboard/screens/leaderboard_screen.dart';
 import '../features/crafting/screens/crafting_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
+import '../features/dust/screens/dust_screen.dart';
+import '../features/achievements/screens/achievements_screen.dart';
+import '../features/collections/screens/collections_screen.dart';
 import '../widgets/common/main_shell.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/',
+    // PREVIEW_ROUTE (dart-define, default '/'): rotta iniziale per anteprima/dev.
+    initialLocation: const String.fromEnvironment('PREVIEW_ROUTE', defaultValue: '/'),
     routes: [
       ShellRoute(
         builder: (context, state, child) => MainShell(child: child),
         routes: [
-          GoRoute(path: '/',            builder: (_, __) => const HomeScreen()),
-          GoRoute(path: '/inventory',   builder: (_, __) => const InventoryScreen()),
-          GoRoute(path: '/shop',        builder: (_, __) => const ShopScreen()),
-          GoRoute(path: '/upgrades',    builder: (_, __) => const UpgradesScreen()),
-          GoRoute(path: '/missions',    builder: (_, __) => const MissionsScreen()),
-          GoRoute(path: '/trade',       builder: (_, __) => const TradeScreen()),
-          GoRoute(path: '/clan',        builder: (_, __) => const ClanScreen()),
-          GoRoute(path: '/leaderboard', builder: (_, __) => const LeaderboardScreen()),
-          GoRoute(path: '/crafting',    builder: (_, __) => const CraftingScreen()),
-          GoRoute(path: '/profile',     builder: (_, __) => const ProfileScreen()),
+          GoRoute(path: '/',              builder: (_, __) => const HomeScreen()),
+          GoRoute(path: '/empire',        builder: (_, __) => const EmpireScreen()),
+          GoRoute(path: '/inventory',     builder: (_, __) => const InventoryScreen()),
+          GoRoute(path: '/shop',          builder: (_, __) => const ShopScreen()),
+          GoRoute(path: '/upgrades',      builder: (_, __) => const UpgradesScreen()),
+          GoRoute(path: '/missions',      builder: (_, __) => const MissionsScreen()),
+          GoRoute(path: '/trade',         builder: (_, __) => const TradeScreen()),
+          GoRoute(path: '/clan',          builder: (_, __) => const ClanScreen()),
+          GoRoute(path: '/leaderboard',   builder: (_, __) => const LeaderboardScreen()),
+          GoRoute(path: '/crafting',      builder: (_, __) => const CraftingScreen()),
+          GoRoute(path: '/profile',       builder: (_, __) => const ProfileScreen()),
+          GoRoute(path: '/dust',          builder: (_, __) => const DustScreen()),
+          GoRoute(path: '/achievements',  builder: (_, __) => const AchievementsScreen()),
+          GoRoute(path: '/collections',   builder: (_, __) => const CollectionsScreen()),
         ],
       ),
       GoRoute(
@@ -37,6 +47,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => ContainerOpeningScreen(
           containerId: state.pathParameters['containerId']!,
         ),
+      ),
+      GoRoute(
+        path: '/battlepass',
+        builder: (_, __) => const BattlePassScreen(),
       ),
     ],
   );

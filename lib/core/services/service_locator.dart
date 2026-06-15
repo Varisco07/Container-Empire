@@ -1,13 +1,19 @@
+import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/item_model.dart';
 import '../models/player_model.dart';
+import 'achievement_service.dart';
 import 'auth_service.dart';
+import 'battle_pass_service.dart';
 import 'database_service.dart';
 import 'iap_service.dart';
 import 'inventory_service.dart';
+import 'meta_service.dart';
 import 'player_service.dart';
+import 'rewarded_ad_service.dart';
 import 'rng_service.dart';
+import 'tycoon_service.dart';
 
 final GetIt sl = GetIt.instance;
 
@@ -35,12 +41,30 @@ Future<void> setupServiceLocator() async {
   await inventoryService.init(uid: authService.currentUid);
   sl.registerSingleton<InventoryService>(inventoryService);
 
-  sl.registerSingleton<RngService>(RngService());
+  // TycoonService — motore idle (profitti, guadagni offline, strutture)
+  final tycoonService = TycoonService();
+  await tycoonService.init(uid: authService.currentUid);
+  sl.registerSingleton<TycoonService>(tycoonService);
 
-  // IapService — inizializzato e pronto all'uso
+  // BattlePassService — stagione, traccia free/premium
+  final battlePassService = BattlePassService();
+  await battlePassService.init(uid: authService.currentUid);
+  sl.registerSingleton<BattlePassService>(battlePassService);
+
+  sl.registerSingleton<RngService>(RngService());
+  sl.registerSingleton<RewardedAdService>(RewardedAdService());
+
+  sl.registerSingleton<MetaService>(MetaService());
+  sl.registerSingleton<AchievementService>(AchievementService());
+
+  // IapService — inizializzato e pronto all'uso (non bloccante su web/desktop)
   final iapService = IapService(playerService);
   sl.registerSingleton<IapService>(iapService);
-  await iapService.init();
+  try {
+    await iapService.init();
+  } catch (e) {
+    debugPrint('⚠️ IAP init saltato (piattaforma non supportata): $e');
+  }
 }
 
 /// Chiamato dopo login/register per ricaricare i dati del nuovo utente
@@ -49,4 +73,7 @@ Future<void> reloadUserServices(String uid) async {
   await ps.init(uid: uid);
   final inv = sl<InventoryService>();
   await inv.init(uid: uid);
+  await sl<TycoonService>().init(uid: uid);
+  await sl<BattlePassService>().init(uid: uid);
+  await sl<MetaService>().init(uid: uid);
 }

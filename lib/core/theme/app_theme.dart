@@ -13,12 +13,17 @@ class AppTheme {
         error: AppColors.error,
       ),
       fontFamily: 'Rajdhani',
+      // Rimuove globalmente TextDecoration.underline che Flutter web eredita dal browser
       textTheme: const TextTheme(
-        displayLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w700, color: AppColors.textPrimary, letterSpacing: 1.5),
-        titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.textPrimary, letterSpacing: 1.0),
-        bodyLarge: TextStyle(fontSize: 16, color: AppColors.textSecondary),
-        bodyMedium: TextStyle(fontSize: 14, color: AppColors.textSecondary),
-        labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 1.0, color: AppColors.textPrimary),
+        displayLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w700, color: AppColors.textPrimary, letterSpacing: 1.5, decoration: TextDecoration.none),
+        titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.textPrimary, letterSpacing: 1.0, decoration: TextDecoration.none),
+        bodyLarge: TextStyle(fontSize: 16, color: AppColors.textSecondary, decoration: TextDecoration.none),
+        bodyMedium: TextStyle(fontSize: 14, color: AppColors.textSecondary, decoration: TextDecoration.none),
+        labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 1.0, color: AppColors.textPrimary, decoration: TextDecoration.none),
+        bodySmall: TextStyle(fontSize: 12, color: AppColors.textMuted, decoration: TextDecoration.none),
+        labelSmall: TextStyle(fontSize: 10, color: AppColors.textMuted, decoration: TextDecoration.none),
+        titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary, decoration: TextDecoration.none),
+        titleSmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textSecondary, decoration: TextDecoration.none),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
