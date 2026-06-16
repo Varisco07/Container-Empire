@@ -8,7 +8,7 @@
 
 ### Core Gameplay
 - **7 container** dal Free al Quantum — ognuno con loot table bilanciata e visual unico
-- **8 livelli di rarità** — Comune → Cosmico, con glow animato al reveal
+- **9 livelli di rarità** — Comune → Cosmico, con glow animato al reveal
 - **5 tipi di mutazione** — Golden, Diamond, Radioactive, Galaxy, Void — che alterano valore e aspetto
 - **RNG engine avanzato** — luck boost, moltiplicatori evento, pity system (garantisce raro ogni N aperture)
 - **Roulette animata** — striscia scorrevole con animazione fisica + flash al centro
@@ -21,6 +21,16 @@
 - **Prestige system** — reset controllato con +15% luck permanente e badge esclusivo
 - **Pity counter** — garantisce item raro+ dopo soglia configurabile
 - **Daily login streak** — ricompense giornaliere crescenti
+
+### 🏙 Impero / Idle Tycoon
+- **Schermata Impero** — città-porto cyberpunk animata (skyline parallax, droni, navi cargo, riflessi neon) che evolve con il tuo rank
+- **13 strutture potenziabili** — dal Deposito al Portale Galattico, con milestone ×2 e income/sec crescente
+- **Profitti idle + offline** — l'impero produce sempre (cap 8h offline), con riepilogo al ritorno
+- **Tap-to-earn** — tocca la città per profitti istantanei
+- **TURBO ×2** — boost a tempo sbloccabile guardando un rewarded ad
+- **Ascension (prestige)** — azzeri l'impero in cambio di punti permanenti (+2%/punto ai profitti, per sempre); si sblocca a 5.000/s di profitto base
+- **Contratti del Porto** — obiettivi a tempo sempre attivi («Consegna 🪙 X entro MM:SS») con ricompensa in gemme + coin: il loop che incentiva a tornare e giocare
+- **Sync cloud dell'impero** — salvato su Firestore per ogni utente loggato: sopravvive a reinstall, browser puliti e cambio dispositivo
 
 ### Missioni & Social
 - **Missioni giornaliere / settimanali / permanenti** — board completa con progress bar
@@ -42,7 +52,7 @@
 
 ### Backend & Auth
 - **Firebase Auth** — email/password + Google Sign-In
-- **Cloud Firestore** — sync profilo, inventario, leaderboard, trade, clan
+- **Cloud Firestore** — sync profilo, inventario, **impero**, leaderboard, trade, clan
 - **Hive** — cache locale offline
 - **IAP** — gem pack, VIP Pass (ready for production)
 
@@ -82,7 +92,8 @@ lib/
 │   │   ├── player_service.dart      # XP, level-up, currency, prestige
 │   │   ├── inventory_service.dart   # Add/remove/sell/lock item, filtri, sort
 │   │   ├── auth_service.dart        # Firebase Auth — email + Google Sign-In
-│   │   ├── database_service.dart    # Firestore — profilo, player, inventario, leaderboard
+│   │   ├── database_service.dart    # Firestore — profilo, player, inventario, impero, leaderboard
+│   │   ├── tycoon_service.dart      # Motore idle: profitti, offline, contratti, ascension, TURBO
 │   │   └── service_locator.dart     # GetIt registrations
 │   ├── theme/
 │   │   └── app_colors.dart          # Palette neon + rarityColor() + mutationColor()
@@ -91,6 +102,7 @@ lib/
 ├── features/
 │   ├── auth/                        # Login screen — email/password + Google
 │   ├── home/                        # Selezione container, hero animato, pulsante APRI
+│   ├── tycoon/                      # 🏙 Impero idle: città animata, contratti, ascension, TURBO
 │   ├── container_opening/           # Roulette, reveal card, confetti, haptic, batch open
 │   ├── inventory/                   # Griglia item, filtri, sort, sell bulk, detail sheet
 │   ├── crafting/                    # Fusione item — 6 ricette, spark animation
@@ -162,22 +174,34 @@ Assicurati che il tuo progetto Firebase abbia abilitato:
 - ✅ Firestore Database
 - ✅ (opzionale) Analytics · Crashlytics
 
-**Firestore Security Rules** consigliate:
+**Firestore Security Rules** — già incluse nel repo in [`firestore.rules`](firestore.rules). Ogni utente legge/scrive **solo** i propri dati (profilo, player, inventario e impero sotto `users/{uid}`); username e leaderboard sono leggibili dagli utenti autenticati ma scrivibili solo dal proprietario:
 
 ```
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /usernames/{username} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-    match /users/{uid}/{document=**} {
+
+    // Dati utente: profilo, player, inventario, impero (users/{uid}/data/empire)
+    match /users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
+      match /{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
     }
+
+    match /usernames/{username} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if request.auth != null
+                            && resource.data.uid == request.auth.uid;
+    }
+
     match /leaderboard/{uid} {
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == uid;
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+                   && request.auth.uid == uid
+                   && request.resource.data.uid == uid;
     }
   }
 }
@@ -185,15 +209,23 @@ service cloud.firestore {
 
 ### 5. Avvia l'app
 
+#### 🪟 Sviluppo su Windows — dati persistenti (consigliato)
+
+```powershell
+.\run.ps1            # oppure  .\run.ps1 -Port 9000
+```
+
+Lo script `run.ps1` serve l'app su una porta fissa (`http://localhost:8080`) e apre **il tuo browser**: login, impero e progressi **restano** tra un riavvio e l'altro. Dopo una modifica al codice premi `r` (hot reload) o `R` (restart) nel terminale, poi aggiorna la pagina (`F5`).
+
+> ⚠️ **Non usare `flutter run -d chrome` per testare la persistenza:** apre un profilo Chrome temporaneo usa-e-getta che azzera login e dati locali (Hive/IndexedDB) ad ogni avvio — l'impero sembrerà resettarsi anche se è tutto corretto.
+
+#### Altre piattaforme
+
 ```bash
-# Browser (più veloce per sviluppo)
-flutter run -d chrome
-
-# Android
-flutter run -d <device-id>
-
-# iOS (solo macOS)
-flutter run -d ios
+flutter run -d web-server --web-port=8080   # equivalente di run.ps1 (browser da aprire a mano)
+flutter run -d chrome                        # browser rapido, ma dati NON persistenti
+flutter run -d <device-id>                   # Android
+flutter run -d ios                           # iOS (solo macOS)
 ```
 
 ---
@@ -232,11 +264,11 @@ I drop rate sono valori base. Il motore RNG applica luck boost, prestige bonus, 
 
 | Mutazione | Moltiplicatore valore | Probabilità |
 |---|---|---|
-| Golden ✨ | ×5 | ~2% |
-| Diamond 💎 | ×10 | ~0.8% |
-| Radioactive ☢️ | ×15 | ~0.3% |
-| Galaxy 🌌 | ×25 | ~0.1% |
-| Void 🕳️ | ×40 | ~0.02% |
+| Golden ✨ | ×1.5 | ~5% |
+| Diamond 💎 | ×3 | ~2% |
+| Radioactive ☢️ | ×6 | ~0.8% |
+| Galaxy 🌌 | ×15 | ~0.3% |
+| Void 🕳️ | ×40 | ~0.1% |
 
 ---
 
@@ -251,6 +283,7 @@ I drop rate sono valori base. Il motore RNG applica luck boost, prestige bonus, 
 | 5 — Economia Avanzata | ✅ Completato | Dust System, Trade tax 7% + listing fee, Achievement System, Collections |
 | 6 — RNG Avanzato | ✅ Completato | Container Ombra (1/500), Mutazioni funzionali, Mastery per container |
 | 7 — Monetizzazione | 🔄 In corso | IAP gem pack, VIP Pass, rewarded ads |
+| 7.5 — Idle Tycoon | ✅ Completato | Impero idle, profitti offline, Ascension, TURBO, Contratti del Porto, città animata, sync cloud |
 | 8 — Release | ⏳ Pianificato | Asset finali, tutorial, onboarding, Play Store / App Store |
 | 9 — Post-Launch | ⏳ Pianificato | Battle Pass, eventi stagionali, tornei, aste, clan wars |
 
@@ -261,6 +294,7 @@ I drop rate sono valori base. Il motore RNG applica luck boost, prestige bonus, 
 | Problema | Fix |
 |---|---|
 | `firebase_options.dart` mancante | Esegui `flutterfire configure` |
+| Impero / progressi si azzerano ad ogni riavvio | Usa `.\run.ps1` (dev server nel tuo browser) ed effettua il **login**: i dati restano. `flutter run -d chrome` usa un profilo Chrome temporaneo che azzera login e dati locali ad ogni avvio. |
 | Errori adapter Hive | `dart run build_runner build --delete-conflicting-outputs` |
 | Login non funziona | Controlla le Firestore Security Rules (vedi sopra) |
 | Google Sign-In non disponibile | Aggiungi il tuo SHA-1 nelle impostazioni Firebase |

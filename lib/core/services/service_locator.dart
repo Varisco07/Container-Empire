@@ -70,3 +70,25 @@ Future<void> reloadUserServices(String uid) async {
   await sl<TycoonService>().init(uid: uid);
   await sl<MetaService>().init(uid: uid);
 }
+
+/// Elimina account + TUTTI i dati, cloud e locali (GDPR / requisito store).
+/// Dopo questa chiamata l'app va riavviata: i box locali sono stati rimossi.
+Future<AccountDeletionResult> deleteAccountAndAllData() async {
+  final auth = sl<AuthService>();
+  final uid = auth.currentUid;
+  final result = await auth.deleteAccount();
+
+  // Pulizia dei box Hive locali (per-utente e ospite) — best effort.
+  final boxes = <String>{
+    'tycoon_empire', 'tycoon_local', 'player_local', 'inventory_local',
+    if (uid != null) 'player_$uid',
+    if (uid != null) 'inventory_$uid',
+    if (uid != null) 'tycoon_$uid',
+  };
+  for (final name in boxes) {
+    try {
+      await Hive.deleteBoxFromDisk(name);
+    } catch (_) {}
+  }
+  return result;
+}

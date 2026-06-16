@@ -35,14 +35,12 @@ class _EmpireScreenState extends ConsumerState<EmpireScreen> {
   @override
   void initState() {
     super.initState();
-    // Accumula subito il tempo trascorso (es. tornando da un altro tab).
+    // Accumula subito il tempo trascorso (es. tornando da un altro tab), POI
+    // genera/rinnova il contratto: così il recupero offline non lo riempie gratis.
     _tycoon.accrue();
+    _tycoon.ensureContract();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _tycoon.accrue(); // profitti su tempo reale (continua anche fuori schermo)
-      if (_tycoon.boostActive) {
-        // Il TURBO ×2 si applica solo ai secondi "live" mentre guardi.
-        _tycoon.addBonus(_tycoon.idleIncomePerSec * (TycoonService.boostMultiplier - 1));
-      }
+      _tycoon.tickLive(); // idle + TURBO live + avanzamento contratto del porto
       if (mounted) setState(() {});
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -80,6 +78,16 @@ class _EmpireScreenState extends ConsumerState<EmpireScreen> {
     _snack('💰 Incassati +${fmtNum(amount)} 🪙', AppColors.success);
   }
 
+  Future<void> _claimContract() async {
+    final r = await _tycoon.claimContract();
+    if (r == null) return;
+    HapticFeedback.heavyImpact();
+    ref.read(playerNotifierProvider.notifier).refresh();
+    if (mounted) setState(() {});
+    _snack('📦 ${r.title} consegnato! +${r.gems}💎  +${fmtNum(r.coins)} 🪙',
+        AppColors.success);
+  }
+
   Future<void> _buy(EmpireBuilding b) async {
     final ok = await _tycoon.buyUpgrade(b);
     if (ok) {
@@ -106,7 +114,11 @@ class _EmpireScreenState extends ConsumerState<EmpireScreen> {
 
   void _tryAscend() {
     if (!_tycoon.canAscend) {
-      _snack('Impero troppo piccolo per ascendere — espandi ancora!', AppColors.warning);
+      _snack(
+        'Per ascendere servono ${fmtNum(TycoonService.ascensionThreshold)}/s di profitto base '
+        '(ora ${fmtNum(_tycoon.baseIncomePerSec)}/s)',
+        AppColors.warning,
+      );
       return;
     }
     _showAscensionDialog();
@@ -170,6 +182,17 @@ class _EmpireScreenState extends ConsumerState<EmpireScreen> {
             child: Column(
               children: [
                 _TopHud(rank: rank, incomeSec: incomeSec, boostActive: boostActive),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+                  child: _ContractCard(
+                    contract: _tycoon.activeContract,
+                    progress: _tycoon.contractProgress,
+                    fraction: _tycoon.contractFraction,
+                    timeLeft: _tycoon.contractTimeLeft,
+                    ready: _tycoon.contractReady,
+                    onClaim: _claimContract,
+                  ),
+                ),
                 Expanded(
                   flex: 4,
                   child: Center(
@@ -201,6 +224,7 @@ class _EmpireScreenState extends ConsumerState<EmpireScreen> {
                     pendingPoints: _tycoon.pendingAscensionPoints,
                     ascensionPoints: _tycoon.ascensionPoints,
                     canAscend: _tycoon.canAscend,
+                    baseIncome: _tycoon.baseIncomePerSec,
                     onTurbo: _turbo,
                     onAscend: _tryAscend,
                   ),
@@ -336,7 +360,7 @@ class _EmpireScreenState extends ConsumerState<EmpireScreen> {
         emoji: '✦',
         title: 'ASCENSION',
         subtitle:
-            'Vendi l\'intero impero e ricomincia.\nGuadagni punti permanenti che\nmoltiplicano i profitti PER SEMPRE.',
+            'COSTO: azzeri TUTTI gli edifici (a livello 0)\ne i profitti non incassati.\nIn cambio: punti permanenti, +2% profitti\nPER SEMPRE per ogni punto.',
         bigText: '+$gained PUNTI',
         bigColor: AppColors.neonPurple,
         accent: AppColors.neonPurple,
@@ -366,6 +390,173 @@ class _Floater {
   final double x, y;
   final String text;
   _Floater(this.id, this.x, this.y, this.text);
+}
+
+// ─── Contratto del porto (obiettivo a tempo) ─────────────────────────────────
+
+class _ContractCard extends StatelessWidget {
+  final EmpireContract? contract;
+  final double progress;
+  final double fraction;
+  final Duration timeLeft;
+  final bool ready;
+  final VoidCallback onClaim;
+
+  const _ContractCard({
+    required this.contract,
+    required this.progress,
+    required this.fraction,
+    required this.timeLeft,
+    required this.ready,
+    required this.onClaim,
+  });
+
+  String _fmtDur(Duration d) {
+    final m = d.inMinutes;
+    final s = d.inSeconds % 60;
+    return '$m:${s.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = contract;
+    if (c == null) return const SizedBox.shrink();
+    final urgent = !ready && timeLeft.inSeconds <= 30;
+    final accent = ready ? AppColors.success : (urgent ? AppColors.error : AppColors.neonOrange);
+
+    final card = GlassPanel(
+      radius: 18,
+      padding: const EdgeInsets.fromLTRB(14, 10, 12, 11),
+      tint: accent.withOpacity(0.10),
+      borderColor: accent.withOpacity(ready ? 0.6 : 0.32),
+      glow: ready ? AppColors.success : (urgent ? AppColors.error.withOpacity(0.6) : null),
+      glowBlur: 16,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Text(c.emoji, style: const TextStyle(fontSize: 18)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        const Text('CONTRATTO',
+                            style: TextStyle(
+                                color: AppColors.textMuted,
+                                fontSize: 8,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.2)),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(c.title.toUpperCase(),
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  color: accent,
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.3)),
+                        ),
+                      ],
+                    ),
+                    Text('Consegna 🪙 ${fmtNum(c.target)}',
+                        style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!ready)
+                    Text('⏳ ${_fmtDur(timeLeft)}',
+                        style: TextStyle(
+                            color: urgent ? AppColors.error : AppColors.textSecondary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900))
+                  else
+                    const Text('✓ PRONTO',
+                        style: TextStyle(
+                            color: AppColors.success,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5)),
+                  Text('🎁 +${c.rewardGems}💎  +🪙 ${fmtNum(c.rewardCoins)}',
+                      style: const TextStyle(
+                          color: AppColors.gems, fontSize: 9.5, fontWeight: FontWeight.w800)),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Stack(
+                    children: [
+                      Container(height: 10, color: Colors.white.withOpacity(0.06)),
+                      FractionallySizedBox(
+                        widthFactor: ready ? 1.0 : fraction.clamp(0.0, 1.0),
+                        child: Container(
+                          height: 10,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: ready
+                                  ? const [AppColors.success, AppColors.neonGreen]
+                                  : const [AppColors.neonOrange, AppColors.coins],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              if (ready)
+                GestureDetector(
+                  onTap: onClaim,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(colors: [AppColors.success, AppColors.neonGreen]),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [BoxShadow(color: AppColors.success.withOpacity(0.5), blurRadius: 12)],
+                    ),
+                    child: const Text('🎁 RISCATTA',
+                        style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5)),
+                  ),
+                )
+              else
+                Text('${fmtNum(progress)} / ${fmtNum(c.target)}',
+                    style: const TextStyle(
+                        color: AppColors.textMuted, fontSize: 9.5, fontWeight: FontWeight.w700)),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    // Pulsa leggermente quando è pronto da riscattare.
+    return ready
+        ? card.animate(onPlay: (c) => c.repeat(reverse: true)).scaleXY(
+            begin: 1.0, end: 1.015, duration: 700.ms, curve: Curves.easeInOut)
+        : card;
+  }
 }
 
 // ─── Top HUD ───────────────────────────────────────────────────────────────────
@@ -572,6 +763,7 @@ class _ControlRow extends StatelessWidget {
   final int pendingPoints;
   final int ascensionPoints;
   final bool canAscend;
+  final double baseIncome;
   final VoidCallback onTurbo;
   final VoidCallback onAscend;
 
@@ -581,6 +773,7 @@ class _ControlRow extends StatelessWidget {
     required this.pendingPoints,
     required this.ascensionPoints,
     required this.canAscend,
+    required this.baseIncome,
     required this.onTurbo,
     required this.onAscend,
   });
@@ -611,9 +804,12 @@ class _ControlRow extends StatelessWidget {
             color: AppColors.neonPurple,
             icon: '✦',
             title: 'ASCENSION',
+            // Mostra il "costo": quando puoi, +punti azzerando l'impero; quando
+            // non puoi, la soglia di sblocco (profitto base richiesto).
             subtitle: canAscend
-                ? '+$pendingPoints punti'
-                : (ascensionPoints > 0 ? '$ascensionPoints pt totali' : 'Espandi ancora'),
+                ? '+$pendingPoints pt · azzeri l\'impero'
+                : 'Sblocca a ${fmtNum(TycoonService.ascensionThreshold)}/s'
+                    '${ascensionPoints > 0 ? ' · $ascensionPoints pt' : ''}',
             active: canAscend,
             onTap: onAscend,
           ),

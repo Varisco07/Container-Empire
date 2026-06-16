@@ -41,11 +41,16 @@ class TradeOffer {
 }
 
 // ─── Simulated marketplace data ──────────────────────────────────────────────
+// REGOLA ECONOMIA: il prezzo di un'offerta in monete è SEMPRE > del valore
+// dell'item (premio di mercato ~+30%). Così rivenderlo al sistema (sellItem →
+// finalValue == itemValue) rende MENO di quanto hai pagato: niente arbitraggio
+// "compra basso, rivendi alto". Stessa regola delle offerte create dai giocatori
+// (prezzo minimo = finalValue). Le offerte in gemme sono deal di valuta premium.
 
 final List<TradeOffer> _simulatedOffers = [
   TradeOffer(id: 'sim_1', sellerUsername: 'DragonSlayer', itemName: 'Vaso Ming',
       rarityKey: 'legendary', category: 'Arte', itemValue: 2400,
-      priceType: TradeType.coins, priceCoins: 1800, priceGems: 0, isMine: false,
+      priceType: TradeType.coins, priceCoins: 3100, priceGems: 0, isMine: false,
       createdAt: DateTime.now().subtract(const Duration(hours: 2))),
   TradeOffer(id: 'sim_2', sellerUsername: 'NightWolf99', itemName: 'Core Nucleare Piccolo',
       rarityKey: 'mythic', category: 'Energia', itemValue: 22500,
@@ -53,11 +58,11 @@ final List<TradeOffer> _simulatedOffers = [
       createdAt: DateTime.now().subtract(const Duration(hours: 5))),
   TradeOffer(id: 'sim_3', sellerUsername: 'CryptoKing', itemName: 'Stealth Tech Module',
       rarityKey: 'mythic', category: 'Tech Militare', itemValue: 87500,
-      priceType: TradeType.coins, priceCoins: 65000, priceGems: 0, isMine: false,
+      priceType: TradeType.coins, priceCoins: 114000, priceGems: 0, isMine: false,
       createdAt: DateTime.now().subtract(const Duration(minutes: 30))),
   TradeOffer(id: 'sim_4', sellerUsername: 'LuckyGamer', itemName: 'Chitarra Acustica',
       rarityKey: 'epic', category: 'Strumenti', itemValue: 660,
-      priceType: TradeType.coins, priceCoins: 500, priceGems: 0, isMine: false,
+      priceType: TradeType.coins, priceCoins: 860, priceGems: 0, isMine: false,
       createdAt: DateTime.now().subtract(const Duration(hours: 1))),
   TradeOffer(id: 'sim_5', sellerUsername: 'StarCollector', itemName: 'Corona Reale',
       rarityKey: 'divine', category: 'Regali', itemValue: 900000,
@@ -65,7 +70,7 @@ final List<TradeOffer> _simulatedOffers = [
       createdAt: DateTime.now().subtract(const Duration(hours: 8))),
   TradeOffer(id: 'sim_6', sellerUsername: 'PixelHunter', itemName: 'Prototipo Robot',
       rarityKey: 'legendary', category: 'Robotica', itemValue: 7200,
-      priceType: TradeType.coins, priceCoins: 5500, priceGems: 0, isMine: false,
+      priceType: TradeType.coins, priceCoins: 9400, priceGems: 0, isMine: false,
       createdAt: DateTime.now().subtract(const Duration(hours: 3))),
   TradeOffer(id: 'sim_7', sellerUsername: 'QuantumX', itemName: 'Materia Oscura Campione',
       rarityKey: 'epic', category: 'Quantum', itemValue: 3300000,
@@ -1024,6 +1029,20 @@ class _BuyConfirmDialog extends StatelessWidget {
                       fontWeight: FontWeight.w900, fontSize: 16)),
               ]),
             ]),
+          ),
+          const SizedBox(height: 10),
+          // Trasparenza: il valore di rivendita è inferiore al prezzo pagato.
+          Row(
+            children: [
+              const Icon(Icons.info_outline, size: 13, color: AppColors.textMuted),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'Valore di rivendita: 🪙 ${_fmt(offer.itemValue)} — meno del prezzo (paghi un premio di mercato).',
+                  style: const TextStyle(color: AppColors.textMuted, fontSize: 10.5, height: 1.3),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 20),
           Row(children: [
