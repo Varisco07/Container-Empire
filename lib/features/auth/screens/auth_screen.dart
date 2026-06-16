@@ -426,13 +426,13 @@ class _AuthScreenState extends State<AuthScreen> {
               const SizedBox(height: 16),
 
               // ── Google Sign-In ──────────────────────────────────────────────
-              Row(children: [
-                const Expanded(child: Divider(color: AppColors.border)),
+              const Row(children: [
+                Expanded(child: Divider(color: AppColors.border)),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  padding: EdgeInsets.symmetric(horizontal: 10),
                   child: Text('oppure', style: TextStyle(color: AppColors.textMuted, fontSize: 11)),
                 ),
-                const Expanded(child: Divider(color: AppColors.border)),
+                Expanded(child: Divider(color: AppColors.border)),
               ]),
               const SizedBox(height: 14),
               SizedBox(

@@ -107,7 +107,9 @@ class _CraftingScreenState extends ConsumerState<CraftingScreen>
     // Prendi la categoria più comune tra gli ingredienti
     final usedItems = allItems.where((i) => toRemove.contains(i.id)).toList();
     final categoryFreq = <String, int>{};
-    for (final i in usedItems) categoryFreq[i.category] = (categoryFreq[i.category] ?? 0) + 1;
+    for (final i in usedItems) {
+      categoryFreq[i.category] = (categoryFreq[i.category] ?? 0) + 1;
+    }
 
     // Se non c'erano item (già rimossi), scegli categoria random dal pool
     final allPool = sl<InventoryService>().filter(sort: SortMode.newest);
@@ -368,7 +370,7 @@ class _FusionArea extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     _RarityBox(rarityKey: recipe.inputRarity,
-                        label: '${selectedCount}/${recipe.inputCount}'),
+                        label: '$selectedCount/${recipe.inputCount}'),
                     const SizedBox(width: 10),
                     AnimatedBuilder(
                       animation: sparkController,
@@ -545,14 +547,14 @@ class _IngredientGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
-      return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-        const Text('📭', style: TextStyle(fontSize: 40)),
-        const SizedBox(height: 12),
-        const Text('Nessun ingrediente disponibile', style: TextStyle(
+      return const Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Text('📭', style: TextStyle(fontSize: 40)),
+        SizedBox(height: 12),
+        Text('Nessun ingrediente disponibile', style: TextStyle(
           color: AppColors.textPrimary, fontSize: 15, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 6),
+        SizedBox(height: 6),
         Text('Apri container per ottenere item di questa rarità',
-            style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+            style: TextStyle(color: AppColors.textMuted, fontSize: 12),
             textAlign: TextAlign.center),
       ]));
     }

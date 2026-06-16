@@ -105,7 +105,7 @@ class _RouletteWidgetState extends State<RouletteWidget>
       child: SafeArea(
         child: LayoutBuilder(builder: (ctx, constraints) {
           final w = constraints.maxWidth;
-          final scrollAmount = _landIdx * _totalW;
+          const scrollAmount = _landIdx * _totalW;
 
           return Column(
             mainAxisAlignment: MainAxisAlignment.center,

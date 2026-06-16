@@ -159,7 +159,7 @@ class DatabaseService {
   };
 
   PlayerModel _playerFromMap(Map<String, dynamic> m) {
-    DateTime _dt(String? s) =>
+    DateTime dt(String? s) =>
         s != null ? DateTime.tryParse(s) ?? DateTime(2000) : DateTime(2000);
 
     return PlayerModel(
@@ -180,8 +180,8 @@ class DatabaseService {
       mutationBoost:         (m['mutationBoost'] as num?)?.toDouble() ?? 1.0,
       inventorySlots:        (m['inventorySlots'] as num?)?.toInt() ?? 50,
       dailyLoginStreak:      (m['dailyLoginStreak'] as num?)?.toInt() ?? 0,
-      lastLoginAt:           _dt(m['lastLoginAt'] as String?),
-      lastFreeContainerAt:   _dt(m['lastFreeContainerAt'] as String?),
+      lastLoginAt:           dt(m['lastLoginAt'] as String?),
+      lastFreeContainerAt:   dt(m['lastFreeContainerAt'] as String?),
       luckUpgradeLevel:      (m['luckUpgradeLevel'] as num?)?.toInt() ?? 0,
       valueUpgradeLevel:     (m['valueUpgradeLevel'] as num?)?.toInt() ?? 0,
       slotsUpgradeLevel:     (m['slotsUpgradeLevel'] as num?)?.toInt() ?? 0,

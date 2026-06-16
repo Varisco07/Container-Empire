@@ -357,7 +357,7 @@ class _PrestigeSection extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    'P${prestigeLevel}',
+                    'P$prestigeLevel',
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13),
                   ),
                 ),

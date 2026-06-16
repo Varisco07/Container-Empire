@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/models/item_model.dart';
 import '../../../core/services/inventory_service.dart';
 import '../../../core/services/service_locator.dart';
 import '../../../core/theme/app_colors.dart';
@@ -28,12 +27,6 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   void dispose() {
     _searchCtrl.dispose();
     super.dispose();
-  }
-
-  List<ItemModel> _getItems() {
-    final sort = ref.read(_sortProvider);
-    final search = ref.read(_searchProvider);
-    return sl<InventoryService>().filter(query: search, sort: sort);
   }
 
   Future<void> _sellSelected() async {
@@ -222,8 +215,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                         item: item,
                         isSelected: isSelected && _selectMode,
                         onTap: _selectMode ? () => setState(() {
-                          if (isSelected) _selected.remove(item.id);
-                          else _selected.add(item.id);
+                          if (isSelected) {
+                            _selected.remove(item.id);
+                          } else {
+                            _selected.add(item.id);
+                          }
                         }) : null,
                         onLock: () async {
                           await sl<InventoryService>().toggleLock(item.id);

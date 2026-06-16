@@ -76,7 +76,7 @@ class SelectedContainerDisplay extends StatelessWidget {
             const SizedBox(height: 12),
 
             // Drop rate pills
-            Wrap(
+            const Wrap(
               spacing: 8,
               children: [
                 _RarityPill('COMUNE 70%', AppColors.common),

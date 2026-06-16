@@ -87,7 +87,7 @@ class _ShopScreenState extends ConsumerState<ShopScreen> {
             const SizedBox(height: 16),
 
           // ── Scambia gemme per monete ──────────────────────────────────
-          _SectionHeader(
+          const _SectionHeader(
               title: 'SCAMBIA GEMME PER MONETE',
               icon: Icons.swap_horiz_rounded,
               color: AppColors.neonCyan),
@@ -100,10 +100,10 @@ class _ShopScreenState extends ConsumerState<ShopScreen> {
             crossAxisSpacing: 10,
             mainAxisSpacing: 10,
             children: [
-              _GemExchange(gems: 5,  coins: 2000,  color: AppColors.neonCyan),
-              _GemExchange(gems: 10, coins: 5000,  color: AppColors.neonGreen),
-              _GemExchange(gems: 25, coins: 15000, color: AppColors.neonPurple, isBest: true),
-              _GemExchange(gems: 50, coins: 40000, color: AppColors.neonGold),
+              const _GemExchange(gems: 5,  coins: 2000,  color: AppColors.neonCyan),
+              const _GemExchange(gems: 10, coins: 5000,  color: AppColors.neonGreen),
+              const _GemExchange(gems: 25, coins: 15000, color: AppColors.neonPurple, isBest: true),
+              const _GemExchange(gems: 50, coins: 40000, color: AppColors.neonGold),
             ].asMap().entries.map((e) => _GemExchangeTile(
               exchange: e.value,
               canAfford: gems >= e.value.gems,
@@ -112,10 +112,12 @@ class _ShopScreenState extends ConsumerState<ShopScreen> {
                 if (ok) {
                   await sl<PlayerService>().addCoins(e.value.coins);
                   ref.read(playerNotifierProvider.notifier).refresh();
-                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: Text('✅ +${_fmt(e.value.coins)} 🪙 ricevute!'),
                     backgroundColor: AppColors.coins,
                   ));
+                  }
                 }
               } : null,
             )).toList(),
@@ -124,7 +126,7 @@ class _ShopScreenState extends ConsumerState<ShopScreen> {
           const SizedBox(height: 28),
 
           // ── Pacchetti Gemme (REALI) ──────────────────────────────────
-          _SectionHeader(
+          const _SectionHeader(
               title: 'ACQUISTA GEMME',
               icon: Icons.diamond_rounded,
               color: AppColors.gems),
@@ -171,10 +173,12 @@ class _ShopScreenState extends ConsumerState<ShopScreen> {
                 : () => _buyProduct(IapProducts.vipMonthly, iapState),
             onRestore: () async {
               await sl<IapService>().restorePurchases();
-              if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                 content: Text('Acquisti ripristinati'),
                 backgroundColor: AppColors.neonCyan,
               ));
+              }
             },
           ),
 

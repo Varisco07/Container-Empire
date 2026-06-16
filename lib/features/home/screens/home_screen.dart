@@ -169,9 +169,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
           ),
           const SizedBox(height: 7),
-          Row(
+          const Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
+            children: [
               Text('◆', style: TextStyle(color: Color(0xFF3A6BD4), fontSize: 7)),
               SizedBox(width: 9),
               Text(

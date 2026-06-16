@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,8 +41,6 @@ class TradeOffer {
 }
 
 // ─── Simulated marketplace data ──────────────────────────────────────────────
-
-final _rng = Random(DateTime.now().millisecondsSinceEpoch);
 
 final List<TradeOffer> _simulatedOffers = [
   TradeOffer(id: 'sim_1', sellerUsername: 'DragonSlayer', itemName: 'Vaso Ming',
@@ -465,7 +462,7 @@ class _OfferCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(colors: [AppColors.neonGold, const Color(0xFFFF9F00)]),
+                      gradient: const LinearGradient(colors: [AppColors.neonGold, Color(0xFFFF9F00)]),
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: [BoxShadow(color: AppColors.neonGold.withOpacity(0.35), blurRadius: 10)],
                     ),
@@ -551,15 +548,15 @@ class _MyOffersTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (offers.isEmpty) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('📋', style: TextStyle(fontSize: 48)),
-            const SizedBox(height: 12),
-            const Text('Nessuna offerta attiva', style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 6),
-            const Text('Vai su "CREA" per mettere in vendita un item', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+            Text('📋', style: TextStyle(fontSize: 48)),
+            SizedBox(height: 12),
+            Text('Nessuna offerta attiva', style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
+            SizedBox(height: 6),
+            Text('Vai su "CREA" per mettere in vendita un item', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
           ],
         ),
       );
@@ -655,7 +652,7 @@ class _CreateTradeTabState extends ConsumerState<_CreateTradeTab> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _StepHeader(step: 1, total: 2, title: 'Scegli un item da vendere'),
+        const _StepHeader(step: 1, total: 2, title: 'Scegli un item da vendere'),
         const SizedBox(height: 14),
         if (items.isEmpty)
           Container(
@@ -729,7 +726,7 @@ class _CreateTradeTabState extends ConsumerState<_CreateTradeTab> {
             child: const Icon(Icons.arrow_back_ios_rounded, color: AppColors.textMuted, size: 18),
           ),
           const SizedBox(width: 8),
-          _StepHeader(step: 2, total: 2, title: 'Imposta il prezzo'),
+          const _StepHeader(step: 2, total: 2, title: 'Imposta il prezzo'),
         ]),
         const SizedBox(height: 16),
 
@@ -882,7 +879,7 @@ class _CreateTradeTabState extends ConsumerState<_CreateTradeTab> {
               await ps.spendCoins(listingFee);
               widget.onPost(TradeOffer(
                 id: 'my_${DateTime.now().millisecondsSinceEpoch}',
-                sellerUsername: player?.username ?? 'Tu',
+                sellerUsername: player.username,
                 itemName: item.name,
                 rarityKey: item.rarityKey,
                 category: item.category,

@@ -106,7 +106,7 @@ class _RevealPainter extends CustomPainter {
     // ── God-rays rotanti ──────────────────────────────────────────────────────
     final rayCount = (10 + intensity * 8).round();
     final rot = t * 0.18;
-    final halfW = 0.10; // ampiezza angolare del raggio
+    const halfW = 0.10; // ampiezza angolare del raggio
     for (int i = 0; i < rayCount; i++) {
       final a = rot + i * (2 * pi / rayCount);
       // leggero "respiro" per ogni raggio

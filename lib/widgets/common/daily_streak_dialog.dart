@@ -55,7 +55,7 @@ class _DailyStreakDialogState extends State<DailyStreakDialog> {
     if (day == 30) return '🎁 MEGA';
     if (day % 7 == 0) return '💎×${(day ~/ 7) * 3 + 10}';
     final coins = (200 + day * 100) / 1000;
-    return '🪙${coins >= 1 ? '${coins.toStringAsFixed(0)}K' : '${(200 + day * 100).toStringAsFixed(0)}'}';
+    return '🪙${coins >= 1 ? '${coins.toStringAsFixed(0)}K' : (200 + day * 100).toStringAsFixed(0)}';
   }
 
   bool _isMilestone(int day) => day % 7 == 0 || day == 30;
