@@ -3,10 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/models/empire_building.dart';
-import '../../../core/services/battle_pass_service.dart';
 import '../../../core/services/rewarded_ad_service.dart';
 import '../../../core/services/service_locator.dart';
 import '../../../core/services/tycoon_service.dart';
@@ -37,8 +35,14 @@ class _EmpireScreenState extends ConsumerState<EmpireScreen> {
   @override
   void initState() {
     super.initState();
+    // Accumula subito il tempo trascorso (es. tornando da un altro tab).
+    _tycoon.accrue();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _tycoon.tick(1);
+      _tycoon.accrue(); // profitti su tempo reale (continua anche fuori schermo)
+      if (_tycoon.boostActive) {
+        // Il TURBO ×2 si applica solo ai secondi "live" mentre guardi.
+        _tycoon.addBonus(_tycoon.idleIncomePerSec * (TycoonService.boostMultiplier - 1));
+      }
       if (mounted) setState(() {});
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -50,7 +54,7 @@ class _EmpireScreenState extends ConsumerState<EmpireScreen> {
   @override
   void dispose() {
     _timer?.cancel();
-    _tycoon.persist();
+    _tycoon.accrue(); // cattura e salva i profitti fino all'uscita dalla pagina
     super.dispose();
   }
 
@@ -58,7 +62,6 @@ class _EmpireScreenState extends ConsumerState<EmpireScreen> {
 
   void _onTapCity(TapDownDetails d) {
     final v = _tycoon.tapEarn();
-    sl<BattlePassService>().addXp(1);
     HapticFeedback.lightImpact();
     final id = _floatId++;
     _floaters.add(_Floater(id, d.localPosition.dx, d.localPosition.dy, '+${fmtNum(v)}'));
@@ -71,7 +74,6 @@ class _EmpireScreenState extends ConsumerState<EmpireScreen> {
   Future<void> _collect() async {
     final amount = await _tycoon.collect();
     if (amount <= 0) return;
-    sl<BattlePassService>().addXp(5);
     HapticFeedback.mediumImpact();
     ref.read(playerNotifierProvider.notifier).refresh();
     if (mounted) setState(() {});
@@ -81,7 +83,6 @@ class _EmpireScreenState extends ConsumerState<EmpireScreen> {
   Future<void> _buy(EmpireBuilding b) async {
     final ok = await _tycoon.buyUpgrade(b);
     if (ok) {
-      sl<BattlePassService>().addXp(3);
       HapticFeedback.selectionClick();
       ref.read(playerNotifierProvider.notifier).refresh();
       if (mounted) setState(() {});
@@ -133,7 +134,6 @@ class _EmpireScreenState extends ConsumerState<EmpireScreen> {
     final incomeSec = _tycoon.totalIncomePerSec;
     final rank = _tycoon.rank;
     final boostActive = _tycoon.boostActive;
-    final bp = sl<BattlePassService>();
 
     return Scaffold(
       backgroundColor: const Color(0xFF050A18),
@@ -203,53 +203,6 @@ class _EmpireScreenState extends ConsumerState<EmpireScreen> {
                     canAscend: _tycoon.canAscend,
                     onTurbo: _turbo,
                     onAscend: _tryAscend,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: GestureDetector(
-                    onTap: () async {
-                      await context.push('/battlepass');
-                      if (mounted) setState(() {});
-                    },
-                    child: GlassPanel(
-                      radius: 16,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-                      tint: AppColors.neonGold.withOpacity(0.12),
-                      borderColor: AppColors.neonGold.withOpacity(0.4),
-                      glow: bp.claimableCount > 0 ? AppColors.neonGold.withOpacity(0.5) : null,
-                      child: Row(
-                        children: [
-                          const Text('🏆', style: TextStyle(fontSize: 20)),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Text('BATTLE PASS',
-                                    style: TextStyle(color: AppColors.neonGold, fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
-                                Text('Stagione 1 · Livello ${bp.currentTier}/${bp.tiers.length}',
-                                    style: const TextStyle(color: AppColors.textMuted, fontSize: 9.5)),
-                              ],
-                            ),
-                          ),
-                          if (bp.claimableCount > 0)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(colors: [AppColors.success, Color(0xFF1FAE5A)]),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text('${bp.claimableCount} 🎁',
-                                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900)),
-                            )
-                          else
-                            const Icon(Icons.chevron_right_rounded, color: AppColors.neonGold, size: 22),
-                        ],
-                      ),
-                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -771,6 +724,7 @@ class _BuildingsPanel extends StatelessWidget {
                     cost: cost,
                     unlocked: unlocked,
                     canAfford: coins >= cost,
+                    coins: coins,
                     onBuy: () => onBuy(b),
                   ),
                 ).animate(delay: (i * 50).ms).fadeIn(duration: 280.ms).slideX(begin: 0.06, end: 0);
@@ -786,7 +740,7 @@ class _BuildingsPanel extends StatelessWidget {
 class _BuildingCard extends StatelessWidget {
   final EmpireBuilding building;
   final int level;
-  final double income, nextIncome, cost;
+  final double income, nextIncome, cost, coins;
   final bool unlocked, canAfford;
   final VoidCallback onBuy;
 
@@ -798,6 +752,7 @@ class _BuildingCard extends StatelessWidget {
     required this.cost,
     required this.unlocked,
     required this.canAfford,
+    required this.coins,
     required this.onBuy,
   });
 
@@ -865,10 +820,13 @@ class _BuildingCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  if (locked)
+                  if (locked) ...[
                     const Text('🔒 Sblocca la struttura precedente',
-                        style: TextStyle(color: AppColors.textMuted, fontSize: 10))
-                  else ...[
+                        style: TextStyle(color: AppColors.textMuted, fontSize: 10)),
+                    Text('Sblocco: 🪙 ${fmtNum(cost)}',
+                        style: const TextStyle(
+                            color: AppColors.textMuted, fontSize: 10, fontWeight: FontWeight.w800)),
+                  ] else ...[
                     Text(level > 0 ? '+${fmtNum(income)}/s' : 'Non ancora attiva',
                         style: TextStyle(
                             color: level > 0 ? AppColors.uncommon : AppColors.textMuted,
@@ -876,6 +834,23 @@ class _BuildingCard extends StatelessWidget {
                             fontWeight: FontWeight.w700)),
                     Text('→ +${fmtNum(nextIncome)}/s',
                         style: TextStyle(color: color.withOpacity(0.6), fontSize: 9.5)),
+                    const SizedBox(height: 2),
+                    // Costo esplicito dell'espansione (verde se te lo puoi permettere)
+                    Text(
+                      '${level == 0 ? 'Costruisci' : 'Espandi'}: 🪙 ${fmtNum(cost)}',
+                      style: TextStyle(
+                        color: canAfford ? AppColors.success : AppColors.error.withOpacity(0.85),
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    if (!canAfford)
+                      Text('Ti mancano 🪙 ${fmtNum(cost - coins)}',
+                          style: TextStyle(
+                            color: AppColors.warning.withOpacity(0.9),
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                          )),
                   ],
                 ],
               ),

@@ -31,6 +31,8 @@ class TycoonService {
   double _offlinePending = 0;
   int _ascensionPoints = 0;
   int _boostUntilMs = 0;
+  // Timestamp (ms) fino al quale i profitti sono già stati accumulati.
+  int _lastSeenMs = 0;
 
   /// Tetto guadagni offline: 8h (estendibile con rewarded ad → 24h).
   static const int offlineCapSeconds = 8 * 3600;
@@ -45,11 +47,30 @@ class TycoonService {
   static const double boostMultiplier = 2.0;
   static const int boostMinutes = 2;
 
-  String _boxName(String? uid) => uid != null ? 'tycoon_$uid' : 'tycoon_local';
+  /// L'impero è UNO per dispositivo: vive in un box stabile e indipendente
+  /// dall'account. Così non si perde MAI passando da ospite a login, da offline
+  /// a online o cambiando utente. (I coins restano per-utente, sincronizzati a
+  /// parte.) Prima si appoggiava a `tycoon_<uid>`: cambiando login il box era
+  /// vuoto e l'impero sembrava azzerato — è il bug "offline mi cancella l'impero".
+  static const String _empireBox = 'tycoon_empire';
 
   Future<void> init({String? uid}) async {
-    final name = _boxName(uid);
-    _box = Hive.isBoxOpen(name) ? Hive.box(name) : await Hive.openBox(name);
+    _box = Hive.isBoxOpen(_empireBox) ? Hive.box(_empireBox) : await Hive.openBox(_empireBox);
+
+    // Migrazione una-tantum dei vecchi salvataggi per-utente verso il box
+    // stabile, così nessun impero già costruito va perso al primo avvio.
+    if (_isEmpty(_box!)) {
+      for (final legacy in <String>{if (uid != null) 'tycoon_$uid', 'tycoon_local'}) {
+        if (legacy == _empireBox || !await Hive.boxExists(legacy)) continue;
+        final old = Hive.isBoxOpen(legacy) ? Hive.box(legacy) : await Hive.openBox(legacy);
+        if (old.isNotEmpty) {
+          for (final key in old.keys) {
+            await _box!.put(key, old.get(key));
+          }
+          break;
+        }
+      }
+    }
 
     _levels.clear();
     for (final b in empireBuildings) {
@@ -70,13 +91,17 @@ class TycoonService {
 
     // ── Guadagni offline (no boost: il boost a tempo è già scaduto) ────────────
     final nowMs = DateTime.now().millisecondsSinceEpoch;
-    final lastMs = (_box!.get('lastSeen', defaultValue: nowMs) as num).toInt();
-    final elapsedSec = ((nowMs - lastMs) ~/ 1000).clamp(0, offlineCapSeconds);
+    _lastSeenMs = (_box!.get('lastSeen', defaultValue: nowMs) as num).toInt();
+    final elapsedSec = ((nowMs - _lastSeenMs) ~/ 1000).clamp(0, offlineCapSeconds);
     _offlinePending = idleIncomePerSec * elapsedSec;
     _uncollected += _offlinePending;
+    _lastSeenMs = nowMs;
 
     await _persist();
   }
+
+  /// True se nel box non c'è ancora alcun impero (nessun livello salvato).
+  bool _isEmpty(Box b) => empireBuildings.every((e) => b.get('lvl_${e.id}') == null);
 
   // ── Moltiplicatori ──────────────────────────────────────────────────────────
 
@@ -140,10 +165,19 @@ class TycoonService {
     return true;
   }
 
-  // ── Tick / collect ──────────────────────────────────────────────────────────
+  // ── Accumulo / collect ──────────────────────────────────────────────────────
 
-  void tick(double seconds) {
-    _uncollected += totalIncomePerSec * seconds;
+  /// Accumula i profitti in base al TEMPO REALE trascorso (wall-clock).
+  /// Così l'impero continua a farmare SEMPRE: mentre guardi, cambiando schermata
+  /// e ad app chiusa (capped a [offlineCapSeconds]). Usa il rate idle (no boost).
+  void accrue() {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final elapsedSec =
+        ((now - _lastSeenMs) / 1000).clamp(0.0, offlineCapSeconds.toDouble());
+    if (elapsedSec <= 0) return;
+    _uncollected += idleIncomePerSec * elapsedSec;
+    _lastSeenMs = now;
+    _persist();
   }
 
   /// Aggiunge profitti bonus ai non incassati (es. raddoppio offline da rewarded ad).
@@ -159,6 +193,7 @@ class TycoonService {
   }
 
   Future<double> collect() async {
+    accrue(); // banca anche i profitti maturati fino a questo istante
     final amount = _uncollected;
     if (amount <= 0) return 0;
     await sl<PlayerService>().addCoins(amount);
@@ -224,10 +259,19 @@ class TycoonService {
 
   Future<void> persist() => _persist();
 
+  /// Salva e forza la scrittura su disco (chiamato all'uscita/pausa dell'app
+  /// per non perdere i progressi dell'impero).
+  Future<void> persistAndFlush() async {
+    await _persist();
+    await _box?.flush();
+  }
+
   Future<void> _persist() async {
     final box = _box;
     if (box == null) return;
     await box.put('uncollected', _uncollected);
-    await box.put('lastSeen', DateTime.now().millisecondsSinceEpoch);
+    // Salva il timestamp fino a cui abbiamo accumulato (non "ora"), così la
+    // ripresa offline calcola correttamente il tempo trascorso.
+    await box.put('lastSeen', _lastSeenMs);
   }
 }
