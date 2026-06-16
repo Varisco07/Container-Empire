@@ -1,11 +1,11 @@
 {
-    "name": "container_empire",
-    "short_name": "container_empire",
+    "name": "Container Empire",
+    "short_name": "Container Empire",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#020609",
+    "theme_color": "#050A18",
+    "description": "Apri container, colleziona oggetti rari e costruisci il tuo impero logistico.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
