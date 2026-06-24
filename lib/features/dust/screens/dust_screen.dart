@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/models/item_model.dart';
-import '../../../core/models/rarity.dart';
 import '../../../core/services/inventory_service.dart';
 import '../../../core/services/player_service.dart';
 import '../../../core/services/service_locator.dart';
@@ -63,7 +62,7 @@ class _DustScreenState extends ConsumerState<DustScreen>
                   ),
                   const Spacer(),
                   ref.watch(playerNotifierProvider).when(
-                    data: (p) => _DustBadge(dust: p?.dust ?? 0),
+                    data: (p) => _DustBadge(dust: p.dust),
                     loading: () => const SizedBox.shrink(),
                     error: (_, __) => const SizedBox.shrink(),
                   ),
@@ -102,7 +101,7 @@ class _DustScreenState extends ConsumerState<DustScreen>
               children: [
                 _UpgradeMutationTab(),
                 _RerollTab(),
-                _TicketTab(),
+                const _TicketTab(),
               ],
             ),
           ),
@@ -460,7 +459,7 @@ class _MutationTierRow extends StatelessWidget {
               const SizedBox(height: 2),
               Text(name,
                   style: TextStyle(
-                      color: color as Color,
+                      color: color,
                       fontSize: 8,
                       fontWeight: FontWeight.w700,
                       decoration: TextDecoration.none)),
@@ -563,7 +562,7 @@ class _RerollTabState extends ConsumerState<_RerollTab> {
           const SizedBox(height: 14),
 
           // Costi
-          _CostTable(rows: [
+          const _CostTable(rows: [
             ('Comune / Non Com.', '100 🌫️'),
             ('Raro / Epico', '500 🌫️'),
             ('Leggendario / Mitico', '3.000 🌫️'),
@@ -573,7 +572,7 @@ class _RerollTabState extends ConsumerState<_RerollTab> {
           const SizedBox(height: 14),
 
           // Probabilità risultato
-          _CostTable(rows: [
+          const _CostTable(rows: [
             ('Void 🕳️', '2%'),
             ('Galaxy 🌌', '5%'),
             ('Radioactive ☢️', '8%'),

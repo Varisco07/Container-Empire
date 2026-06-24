@@ -2,8 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../features/home/screens/home_screen.dart';
 import '../features/tycoon/screens/empire_screen.dart';
-import '../features/battlepass/screens/battle_pass_screen.dart';
 import '../features/container_opening/screens/container_opening_screen.dart';
+import '../features/legal/screens/legal_screen.dart';
 import '../features/inventory/screens/inventory_screen.dart';
 import '../features/shop/screens/shop_screen.dart';
 import '../features/upgrades/screens/upgrades_screen.dart';
@@ -48,10 +48,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           containerId: state.pathParameters['containerId']!,
         ),
       ),
-      GoRoute(
-        path: '/battlepass',
-        builder: (_, __) => const BattlePassScreen(),
-      ),
+      GoRoute(path: '/privacy', builder: (_, __) => LegalScreen.privacy()),
+      GoRoute(path: '/terms', builder: (_, __) => LegalScreen.terms()),
     ],
   );
 });

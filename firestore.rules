@@ -2,26 +2,44 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Players: read/write only own document
-    match /players/{uid} {
+    // ── Dati utente ───────────────────────────────────────────────────────────
+    // Struttura reale usata da DatabaseService:
+    //   users/{uid}/data/profile, users/{uid}/data/player,
+    //   users/{uid}/inventory/{itemId}
+    // Tutto leggibile/scrivibile SOLO dal proprietario autenticato.
+    match /users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
+      match /{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
     }
 
-    // Leaderboard: anyone can read, only authenticated players can write own entry
+    // ── Username univoci ──────────────────────────────────────────────────────
+    // usernames/{username} → { uid }. Chiunque autenticato può leggere (check
+    // unicità / lookup al login). Si può creare/modificare solo un documento che
+    // punta al PROPRIO uid → niente furto di username altrui.
+    match /usernames/{username} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if request.auth != null
+                            && resource.data.uid == request.auth.uid;
+    }
+
+    // ── Classifica globale ────────────────────────────────────────────────────
+    // Lettura per tutti gli autenticati; ognuno scrive solo la propria entry.
+    // NB: i valori non sono validati lato server → per anti-cheat reale spostare
+    // la scrittura su Cloud Functions.
     match /leaderboard/{uid} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == uid;
+      allow write: if request.auth != null
+                   && request.auth.uid == uid
+                   && request.resource.data.uid == uid;
     }
 
-    // Events: read-only (managed by admin/Cloud Functions)
+    // ── Eventi (gestiti da admin / Cloud Functions) ───────────────────────────
     match /events/{eventId} {
       allow read: if request.auth != null;
-      allow write: if false;
-    }
-
-    // Missions: read by owner, write by Cloud Functions only
-    match /missions/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
       allow write: if false;
     }
   }

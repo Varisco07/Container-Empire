@@ -79,13 +79,13 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen> {
           error: (e, _) => _ErrorView(onRetry: () => ref.invalidate(_lbProvider(field))),
           data: (entries) {
             if (entries.isEmpty) {
-              return Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-                const Text('🏆', style: TextStyle(fontSize: 48)),
-                const SizedBox(height: 12),
-                const Text('Nessun dato ancora', style: TextStyle(
+              return const Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Text('🏆', style: TextStyle(fontSize: 48)),
+                SizedBox(height: 12),
+                Text('Nessun dato ancora', style: TextStyle(
                   color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 6),
-                const Text('Apri container per apparire in classifica!',
+                SizedBox(height: 6),
+                Text('Apri container per apparire in classifica!',
                     style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
               ]));
             }

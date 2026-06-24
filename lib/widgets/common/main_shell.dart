@@ -61,15 +61,11 @@ class _BottomNav extends StatefulWidget {
 
 class _BottomNavState extends State<_BottomNav> with SingleTickerProviderStateMixin {
   late AnimationController _pillCtrl;
-  late Animation<double> _pillAnim;
-  int _prevIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _prevIndex = widget.currentIndex;
     _pillCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 280));
-    _pillAnim = CurvedAnimation(parent: _pillCtrl, curve: Curves.easeOutBack);
     _pillCtrl.value = 1.0;
   }
 
@@ -77,7 +73,6 @@ class _BottomNavState extends State<_BottomNav> with SingleTickerProviderStateMi
   void didUpdateWidget(_BottomNav old) {
     super.didUpdateWidget(old);
     if (old.currentIndex != widget.currentIndex) {
-      _prevIndex = old.currentIndex;
       _pillCtrl.forward(from: 0);
     }
   }

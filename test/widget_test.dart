@@ -1,8 +1,7 @@
-// Unit test della logica di gioco (formattazione, rank impero, economia, pass).
+// Unit test della logica di gioco (formattazione, rank impero, economia).
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:container_empire/core/models/empire_building.dart';
-import 'package:container_empire/core/models/battle_pass.dart';
 
 void main() {
   group('fmtNum', () {
@@ -28,15 +27,6 @@ void main() {
     test('rank cresce col profitto', () {
       expect(empireRankFor(0).level, 1);
       expect(empireRankFor(1e18).level, 13);
-    });
-  });
-
-  group('BattlePass', () {
-    test('genera tutte le tier della stagione', () {
-      final tiers = buildSeasonTiers();
-      expect(tiers.length, passTiers);
-      expect(tiers.first.tier, 1);
-      expect(tiers.last.tier, passTiers);
     });
   });
 }

@@ -357,7 +357,7 @@ class _PrestigeSection extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    'P${prestigeLevel}',
+                    'P$prestigeLevel',
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13),
                   ),
                 ),
@@ -591,6 +591,57 @@ class _SettingsSectionState extends State<_SettingsSection> {
     );
   }
 
+  void _showDeleteAccountConfirm() {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Elimina account',
+            style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w800)),
+        content: const Text(
+          'Questa azione è IRREVERSIBILE.\n\nVerranno eliminati per sempre:\n• Account e profilo\n• Monete, gemme, livello e statistiche\n• Inventario e progressi dell\'impero\n• Posizione in classifica\n\nVuoi davvero continuare?',
+          style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: const Text('Annulla'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () async {
+              Navigator.of(dialogCtx).pop();
+              final messenger = ScaffoldMessenger.of(context);
+              final result = await deleteAccountAndAllData();
+              if (!mounted) return;
+              final (msg, color) = switch (result) {
+                AccountDeletionResult.success => (
+                    'Account eliminato. Riavvia l\'app.',
+                    AppColors.warning
+                  ),
+                AccountDeletionResult.requiresRecentLogin => (
+                    'Dati eliminati. Per rimuovere del tutto l\'account rifai login e riprova.',
+                    AppColors.warning
+                  ),
+                AccountDeletionResult.error => (
+                    'Errore durante l\'eliminazione. Riprova o scrivi al supporto.',
+                    AppColors.error
+                  ),
+              };
+              messenger.showSnackBar(SnackBar(
+                content: Text(msg),
+                backgroundColor: color,
+                duration: const Duration(seconds: 5),
+              ));
+            },
+            child: const Text('Elimina'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -621,9 +672,15 @@ class _SettingsSectionState extends State<_SettingsSection> {
 
         _SettingTile(
           icon: Icons.shield_rounded,
-          label: 'Privacy & Dati',
+          label: 'Privacy Policy',
           color: AppColors.neonGreen,
-          onTap: () => _showInfo('Privacy & Dati', 'Container Empire salva i tuoi dati solo localmente sul dispositivo. Nessun dato viene inviato a server esterni senza consenso.'),
+          onTap: () => context.push('/privacy'),
+        ),
+        _SettingTile(
+          icon: Icons.description_rounded,
+          label: 'Termini di Servizio',
+          color: AppColors.neonGreen,
+          onTap: () => context.push('/terms'),
         ),
         _SettingTile(
           icon: Icons.help_rounded,
@@ -644,6 +701,12 @@ class _SettingsSectionState extends State<_SettingsSection> {
           label: 'Logout',
           color: AppColors.error,
           onTap: _showLogoutConfirm,
+        ),
+        _SettingTile(
+          icon: Icons.delete_forever_rounded,
+          label: 'Elimina account',
+          color: AppColors.error,
+          onTap: _showDeleteAccountConfirm,
         ),
       ],
     );

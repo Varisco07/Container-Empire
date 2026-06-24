@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/config/firebase_options.dart';
 import 'core/services/auth_service.dart';
+import 'core/services/player_service.dart';
 import 'core/services/service_locator.dart';
+import 'core/services/tycoon_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/screens/auth_screen.dart';
 import 'routes/app_router.dart';
@@ -39,15 +41,37 @@ class ContainerEmpireApp extends ConsumerStatefulWidget {
   ConsumerState<ContainerEmpireApp> createState() => _ContainerEmpireAppState();
 }
 
-class _ContainerEmpireAppState extends ConsumerState<ContainerEmpireApp> {
+class _ContainerEmpireAppState extends ConsumerState<ContainerEmpireApp>
+    with WidgetsBindingObserver {
   late bool _authenticated;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // PREVIEW_EMPIRE (dart-define, default off): salta l'auth per screenshot/dev.
     _authenticated =
         const bool.fromEnvironment('PREVIEW_EMPIRE') || sl<AuthService>().isLoggedIn;
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Quando l'app va in background o viene chiusa, salva e forza la scrittura
+    // su disco: così i progressi dell'impero non vanno persi.
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.detached ||
+        state == AppLifecycleState.hidden) {
+      if (sl.isRegistered<TycoonService>()) sl<TycoonService>().persistAndFlush();
+      if (sl.isRegistered<PlayerService>()) sl<PlayerService>().persistAndFlush();
+    }
   }
 
   Widget _wrap(Widget content) {

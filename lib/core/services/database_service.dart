@@ -19,6 +19,7 @@ class DatabaseService {
 
   DocumentReference _userDoc(String uid)      => _db.collection('users').doc(uid);
   DocumentReference _playerDoc(String uid)    => _userDoc(uid).collection('data').doc('player');
+  DocumentReference _empireDoc(String uid)    => _userDoc(uid).collection('data').doc('empire');
   DocumentReference _profileDoc(String uid)   => _userDoc(uid).collection('data').doc('profile');
   CollectionReference _inventoryCol(String uid) => _userDoc(uid).collection('inventory');
   DocumentReference _usernameDoc(String username) =>
@@ -78,6 +79,20 @@ class DatabaseService {
     return _playerFromMap(snap.data() as Map<String, dynamic>);
   }
 
+  // ─── Impero (Tycoon) ──────────────────────────────────────────────────────
+  // Stato dell'impero idle salvato come mappa di primitivi in
+  // users/{uid}/data/empire. Così l'impero NON è più solo locale: sopravvive a
+  // reinstall, browser puliti e cambio dispositivo, esattamente come i coins.
+
+  Future<void> saveEmpire(String uid, Map<String, dynamic> state) async {
+    await _empireDoc(uid).set(state, SetOptions(merge: true));
+  }
+
+  Future<Map<String, dynamic>?> loadEmpire(String uid) async {
+    final snap = await _empireDoc(uid).get();
+    return snap.exists ? snap.data() as Map<String, dynamic>? : null;
+  }
+
   // ─── Inventario ───────────────────────────────────────────────────────────
 
   Future<void> saveItem(String uid, ItemModel item) async {
@@ -124,6 +139,30 @@ class DatabaseService {
     return snap.docs.map((d) => d.data()).toList();
   }
 
+  // ─── Cancellazione account (GDPR / requisito store) ───────────────────────
+
+  /// Elimina TUTTI i dati cloud dell'utente: inventario, profilo/player/meta,
+  /// documento utente, entry classifica e prenotazione username.
+  /// Best-effort: ogni passo è isolato così un errore non blocca gli altri.
+  Future<void> deleteAllUserData(String uid, {String? username}) async {
+    try {
+      final inv = await _inventoryCol(uid).get();
+      for (final d in inv.docs) {
+        await d.reference.delete();
+      }
+    } catch (_) {}
+    for (final docId in ['profile', 'player', 'meta']) {
+      try {
+        await _userDoc(uid).collection('data').doc(docId).delete();
+      } catch (_) {}
+    }
+    try { await _userDoc(uid).delete(); } catch (_) {}
+    try { await _db.collection('leaderboard').doc(uid).delete(); } catch (_) {}
+    if (username != null && username.isNotEmpty) {
+      try { await _usernameDoc(username).delete(); } catch (_) {}
+    }
+  }
+
   // ─── Serializzazione PlayerModel ──────────────────────────────────────────
 
   Map<String, dynamic> _playerToMap(PlayerModel p) => {
@@ -159,7 +198,7 @@ class DatabaseService {
   };
 
   PlayerModel _playerFromMap(Map<String, dynamic> m) {
-    DateTime _dt(String? s) =>
+    DateTime dt(String? s) =>
         s != null ? DateTime.tryParse(s) ?? DateTime(2000) : DateTime(2000);
 
     return PlayerModel(
@@ -180,8 +219,8 @@ class DatabaseService {
       mutationBoost:         (m['mutationBoost'] as num?)?.toDouble() ?? 1.0,
       inventorySlots:        (m['inventorySlots'] as num?)?.toInt() ?? 50,
       dailyLoginStreak:      (m['dailyLoginStreak'] as num?)?.toInt() ?? 0,
-      lastLoginAt:           _dt(m['lastLoginAt'] as String?),
-      lastFreeContainerAt:   _dt(m['lastFreeContainerAt'] as String?),
+      lastLoginAt:           dt(m['lastLoginAt'] as String?),
+      lastFreeContainerAt:   dt(m['lastFreeContainerAt'] as String?),
       luckUpgradeLevel:      (m['luckUpgradeLevel'] as num?)?.toInt() ?? 0,
       valueUpgradeLevel:     (m['valueUpgradeLevel'] as num?)?.toInt() ?? 0,
       slotsUpgradeLevel:     (m['slotsUpgradeLevel'] as num?)?.toInt() ?? 0,

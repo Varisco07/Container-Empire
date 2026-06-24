@@ -85,6 +85,13 @@ class PlayerService {
     }
   }
 
+  /// Salva e forza la scrittura su disco (uscita/pausa app).
+  Future<void> persistAndFlush() async {
+    final p = localPlayer;
+    if (p != null) await _box?.put(0, p);
+    await _box?.flush();
+  }
+
   Future<void> addCoins(double amount) async {
     final player = localPlayer;
     if (player == null) return;
@@ -285,7 +292,7 @@ class PlayerService {
   Future<PrestigeResult> prestige() async {
     final player = localPlayer;
     if (player == null || player.level < prestigeMinLevel) {
-      return PrestigeResult(success: false, prestigeLevel: 0, totalLuckBonus: 0);
+      return const PrestigeResult(success: false, prestigeLevel: 0, totalLuckBonus: 0);
     }
 
     player.prestigeLevel += 1;

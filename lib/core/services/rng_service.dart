@@ -126,7 +126,7 @@ class RngService {
   /// Genera un item speciale dal Container Ombra (solo Epic+).
   ItemModel rollShadowItem({required PlayerModel player}) {
     // Crea una loot table virtuale con solo item Epic+
-    final shadowTable = _shadowLootTable;
+    const shadowTable = _shadowLootTable;
     final idx = _random.nextInt(shadowTable.length);
     final entry = shadowTable[idx];
     final mutation = _rollMutation(player.mutationBoost * 2.0); // double mutation chance

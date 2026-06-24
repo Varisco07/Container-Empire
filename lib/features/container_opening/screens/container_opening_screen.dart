@@ -5,12 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/models/achievement_def.dart';
 import '../../../core/models/container_model.dart';
 import '../../../core/models/item_model.dart';
 import '../../../core/models/rarity.dart';
 import '../../../core/services/achievement_service.dart';
-import '../../../core/services/battle_pass_service.dart';
 import '../../../core/services/inventory_service.dart';
 import '../../../core/services/meta_service.dart';
 import '../../../core/services/player_service.dart';
@@ -102,15 +100,21 @@ class _ContainerOpeningScreenState extends ConsumerState<ContainerOpeningScreen>
     }
 
     ref.read(playerNotifierProvider.notifier).refresh();
-    setState(() { _isBusy = true; _revealedItem = item; _phase = OpeningPhase.roulette; });
+    setState(() { _isBusy = true; _revealedItem = item; _multiItems = []; _phase = OpeningPhase.roulette; });
     await Future.delayed(const Duration(milliseconds: 5400));
     if (!mounted) return;
     setState(() => _phase = OpeningPhase.opening);
   }
 
   void _onContainerAnimComplete() {
-    setState(() => _phase = OpeningPhase.reveal);
-    _saveItem();
+    // Batch: gli item sono già stati salvati nel loop → mostra la lista multi.
+    // Singolo: passa al reveal e salva l'item.
+    if (_multiItems.isNotEmpty) {
+      setState(() => _phase = OpeningPhase.multiReveal);
+    } else {
+      setState(() => _phase = OpeningPhase.reveal);
+      _saveItem();
+    }
   }
 
   Future<void> _saveItem() async {
@@ -119,7 +123,6 @@ class _ContainerOpeningScreenState extends ConsumerState<ContainerOpeningScreen>
     await sl<InventoryService>().addItem(item);
     final ps = sl<PlayerService>();
     final result = await ps.incrementContainersOpened();
-    sl<BattlePassService>().addXp(10);
     ref.read(playerNotifierProvider.notifier).refresh();
     if (result.didLevelUp && mounted) {
       setState(() {
@@ -133,7 +136,6 @@ class _ContainerOpeningScreenState extends ConsumerState<ContainerOpeningScreen>
     // Mastery tracking
     final meta = MetaService();
     await meta.incrementMastery(_container.id);
-    final masteryTier = meta.masteryTier(_container.id);
     final masteryLabel = meta.masteryLabel(_container.id);
     // Show mastery milestone if tier just changed
     final opens = meta.masteryProgress[_container.id] ?? 0;
@@ -223,7 +225,6 @@ class _ContainerOpeningScreenState extends ConsumerState<ContainerOpeningScreen>
       if (lu.didLevelUp) lastLevelUp = lu;
       items.add(item);
     }
-    sl<BattlePassService>().addXp(10 * _quantity);
 
     // Pick best item (highest value) to show in roulette preview
     final bestItem = items.reduce((a, b) => a.finalValue > b.finalValue ? a : b);
@@ -251,7 +252,9 @@ class _ContainerOpeningScreenState extends ConsumerState<ContainerOpeningScreen>
     }
 
     ref.read(playerNotifierProvider.notifier).refresh();
-    setState(() { _phase = OpeningPhase.multiReveal; });
+    // Riproduce l'animazione di spacchettamento della scatola anche nel batch,
+    // poi _onContainerAnimComplete passa alla lista multi-reveal.
+    setState(() { _phase = OpeningPhase.opening; });
   }
 
   Future<void> _keepItem() async {
@@ -268,7 +271,9 @@ class _ContainerOpeningScreenState extends ConsumerState<ContainerOpeningScreen>
 
   Future<void> _multiSellAll() async {
     double total = 0;
-    for (final item in _multiItems) total += await sl<InventoryService>().sellItem(item.id);
+    for (final item in _multiItems) {
+      total += await sl<InventoryService>().sellItem(item.id);
+    }
     ref.read(playerNotifierProvider.notifier).refresh();
     _showSnack('💰 Venduto tutto: +🪙 ${_fmtShort(total)}', AppColors.coins);
     _reset();
@@ -278,7 +283,9 @@ class _ContainerOpeningScreenState extends ConsumerState<ContainerOpeningScreen>
     final inv = sl<InventoryService>();
     double total = 0;
     final toSell = _multiItems.where((i) => i.rarity == Rarity.common || i.rarity == Rarity.uncommon).toList();
-    for (final item in toSell) total += await inv.sellItem(item.id);
+    for (final item in toSell) {
+      total += await inv.sellItem(item.id);
+    }
     ref.read(playerNotifierProvider.notifier).refresh();
     _showSnack('💰 Venduti ${toSell.length} comuni (+🪙 ${_fmtShort(total)}), tenuti ${_multiItems.length - toSell.length} rari+', AppColors.coins);
     _reset();
@@ -947,7 +954,9 @@ class _MultiRevealPhase extends StatelessWidget {
   Widget build(BuildContext context) {
     final totalValue = items.fold(0.0, (s, i) => s + i.finalValue);
     final rareCounts = <String, int>{};
-    for (final item in items) rareCounts[item.rarityKey] = (rareCounts[item.rarityKey] ?? 0) + 1;
+    for (final item in items) {
+      rareCounts[item.rarityKey] = (rareCounts[item.rarityKey] ?? 0) + 1;
+    }
 
     return DefaultTextStyle(
       style: const TextStyle(decoration: TextDecoration.none, fontFamily: 'Rajdhani'),

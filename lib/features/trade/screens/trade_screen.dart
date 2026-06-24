@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,13 +41,16 @@ class TradeOffer {
 }
 
 // ─── Simulated marketplace data ──────────────────────────────────────────────
-
-final _rng = Random(DateTime.now().millisecondsSinceEpoch);
+// REGOLA ECONOMIA: il prezzo di un'offerta in monete è SEMPRE > del valore
+// dell'item (premio di mercato ~+30%). Così rivenderlo al sistema (sellItem →
+// finalValue == itemValue) rende MENO di quanto hai pagato: niente arbitraggio
+// "compra basso, rivendi alto". Stessa regola delle offerte create dai giocatori
+// (prezzo minimo = finalValue). Le offerte in gemme sono deal di valuta premium.
 
 final List<TradeOffer> _simulatedOffers = [
   TradeOffer(id: 'sim_1', sellerUsername: 'DragonSlayer', itemName: 'Vaso Ming',
       rarityKey: 'legendary', category: 'Arte', itemValue: 2400,
-      priceType: TradeType.coins, priceCoins: 1800, priceGems: 0, isMine: false,
+      priceType: TradeType.coins, priceCoins: 3100, priceGems: 0, isMine: false,
       createdAt: DateTime.now().subtract(const Duration(hours: 2))),
   TradeOffer(id: 'sim_2', sellerUsername: 'NightWolf99', itemName: 'Core Nucleare Piccolo',
       rarityKey: 'mythic', category: 'Energia', itemValue: 22500,
@@ -56,11 +58,11 @@ final List<TradeOffer> _simulatedOffers = [
       createdAt: DateTime.now().subtract(const Duration(hours: 5))),
   TradeOffer(id: 'sim_3', sellerUsername: 'CryptoKing', itemName: 'Stealth Tech Module',
       rarityKey: 'mythic', category: 'Tech Militare', itemValue: 87500,
-      priceType: TradeType.coins, priceCoins: 65000, priceGems: 0, isMine: false,
+      priceType: TradeType.coins, priceCoins: 114000, priceGems: 0, isMine: false,
       createdAt: DateTime.now().subtract(const Duration(minutes: 30))),
   TradeOffer(id: 'sim_4', sellerUsername: 'LuckyGamer', itemName: 'Chitarra Acustica',
       rarityKey: 'epic', category: 'Strumenti', itemValue: 660,
-      priceType: TradeType.coins, priceCoins: 500, priceGems: 0, isMine: false,
+      priceType: TradeType.coins, priceCoins: 860, priceGems: 0, isMine: false,
       createdAt: DateTime.now().subtract(const Duration(hours: 1))),
   TradeOffer(id: 'sim_5', sellerUsername: 'StarCollector', itemName: 'Corona Reale',
       rarityKey: 'divine', category: 'Regali', itemValue: 900000,
@@ -68,7 +70,7 @@ final List<TradeOffer> _simulatedOffers = [
       createdAt: DateTime.now().subtract(const Duration(hours: 8))),
   TradeOffer(id: 'sim_6', sellerUsername: 'PixelHunter', itemName: 'Prototipo Robot',
       rarityKey: 'legendary', category: 'Robotica', itemValue: 7200,
-      priceType: TradeType.coins, priceCoins: 5500, priceGems: 0, isMine: false,
+      priceType: TradeType.coins, priceCoins: 9400, priceGems: 0, isMine: false,
       createdAt: DateTime.now().subtract(const Duration(hours: 3))),
   TradeOffer(id: 'sim_7', sellerUsername: 'QuantumX', itemName: 'Materia Oscura Campione',
       rarityKey: 'epic', category: 'Quantum', itemValue: 3300000,
@@ -465,7 +467,7 @@ class _OfferCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(colors: [AppColors.neonGold, const Color(0xFFFF9F00)]),
+                      gradient: const LinearGradient(colors: [AppColors.neonGold, Color(0xFFFF9F00)]),
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: [BoxShadow(color: AppColors.neonGold.withOpacity(0.35), blurRadius: 10)],
                     ),
@@ -551,15 +553,15 @@ class _MyOffersTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (offers.isEmpty) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('📋', style: TextStyle(fontSize: 48)),
-            const SizedBox(height: 12),
-            const Text('Nessuna offerta attiva', style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 6),
-            const Text('Vai su "CREA" per mettere in vendita un item', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+            Text('📋', style: TextStyle(fontSize: 48)),
+            SizedBox(height: 12),
+            Text('Nessuna offerta attiva', style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
+            SizedBox(height: 6),
+            Text('Vai su "CREA" per mettere in vendita un item', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
           ],
         ),
       );
@@ -655,7 +657,7 @@ class _CreateTradeTabState extends ConsumerState<_CreateTradeTab> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _StepHeader(step: 1, total: 2, title: 'Scegli un item da vendere'),
+        const _StepHeader(step: 1, total: 2, title: 'Scegli un item da vendere'),
         const SizedBox(height: 14),
         if (items.isEmpty)
           Container(
@@ -729,7 +731,7 @@ class _CreateTradeTabState extends ConsumerState<_CreateTradeTab> {
             child: const Icon(Icons.arrow_back_ios_rounded, color: AppColors.textMuted, size: 18),
           ),
           const SizedBox(width: 8),
-          _StepHeader(step: 2, total: 2, title: 'Imposta il prezzo'),
+          const _StepHeader(step: 2, total: 2, title: 'Imposta il prezzo'),
         ]),
         const SizedBox(height: 16),
 
@@ -882,7 +884,7 @@ class _CreateTradeTabState extends ConsumerState<_CreateTradeTab> {
               await ps.spendCoins(listingFee);
               widget.onPost(TradeOffer(
                 id: 'my_${DateTime.now().millisecondsSinceEpoch}',
-                sellerUsername: player?.username ?? 'Tu',
+                sellerUsername: player.username,
                 itemName: item.name,
                 rarityKey: item.rarityKey,
                 category: item.category,
@@ -1027,6 +1029,20 @@ class _BuyConfirmDialog extends StatelessWidget {
                       fontWeight: FontWeight.w900, fontSize: 16)),
               ]),
             ]),
+          ),
+          const SizedBox(height: 10),
+          // Trasparenza: il valore di rivendita è inferiore al prezzo pagato.
+          Row(
+            children: [
+              const Icon(Icons.info_outline, size: 13, color: AppColors.textMuted),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'Valore di rivendita: 🪙 ${_fmt(offer.itemValue)} — meno del prezzo (paghi un premio di mercato).',
+                  style: const TextStyle(color: AppColors.textMuted, fontSize: 10.5, height: 1.3),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 20),
           Row(children: [

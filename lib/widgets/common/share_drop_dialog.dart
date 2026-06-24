@@ -149,9 +149,9 @@ Apri i tuoi container adesso!''';
           const SizedBox(height: 16),
 
           // Title
-          Text(
+          const Text(
             '🔥 DROP INCREDIBILE! 🔥',
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 18,
               fontWeight: FontWeight.w900,
@@ -159,9 +159,9 @@ Apri i tuoi container adesso!''';
             ),
           ).animate().fadeIn().slideY(begin: -0.2, end: 0),
           const SizedBox(height: 4),
-          Text(
+          const Text(
             'Condividi con i tuoi amici!',
-            style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+            style: TextStyle(color: AppColors.textMuted, fontSize: 12),
           ),
           const SizedBox(height: 20),
 
@@ -221,7 +221,7 @@ Apri i tuoi container adesso!''';
                 // Username
                 Text(
                   widget.username.toUpperCase(),
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 11,
                     letterSpacing: 3,
@@ -229,7 +229,7 @@ Apri i tuoi container adesso!''';
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
+                const Text(
                   'HA TROVATO',
                   style: TextStyle(
                     color: AppColors.textMuted,

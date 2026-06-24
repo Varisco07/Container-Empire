@@ -74,7 +74,7 @@ class ContainerCard extends StatelessWidget {
               ),
             ] else
               const SizedBox(height: 2),
-              Text(
+              const Text(
                 'FREE',
                 style: TextStyle(
                   color: AppColors.neonGreen,

@@ -31,21 +31,21 @@ class ClanData {
 // ─── Simulated clans for browsing ────────────────────────────────────────────
 
 final _browseClanList = [
-  ClanData(id: 'phoenix', name: 'Phoenix Rising', emblem: '🔥', description: 'Clan d\'élite per i migliori giocatori',
+  const ClanData(id: 'phoenix', name: 'Phoenix Rising', emblem: '🔥', description: 'Clan d\'élite per i migliori giocatori',
       level: 12, points: 48200, members: [
-        const ClanMember(username: 'DragonSlayer', role: 'leader', level: 34, contribution: 1200),
-        const ClanMember(username: 'NightWolf99', role: 'officer', level: 28, contribution: 850),
-        const ClanMember(username: 'QuantumX', role: 'member', level: 22, contribution: 620),
+        ClanMember(username: 'DragonSlayer', role: 'leader', level: 34, contribution: 1200),
+        ClanMember(username: 'NightWolf99', role: 'officer', level: 28, contribution: 850),
+        ClanMember(username: 'QuantumX', role: 'member', level: 22, contribution: 620),
       ]),
-  ClanData(id: 'dragons', name: 'Golden Dragons', emblem: '🐉', description: 'Amichevole, tutti benvenuti!',
+  const ClanData(id: 'dragons', name: 'Golden Dragons', emblem: '🐉', description: 'Amichevole, tutti benvenuti!',
       level: 7, points: 21500, members: [
-        const ClanMember(username: 'StarCollector', role: 'leader', level: 18, contribution: 750),
-        const ClanMember(username: 'LuckyGamer', role: 'member', level: 12, contribution: 340),
+        ClanMember(username: 'StarCollector', role: 'leader', level: 18, contribution: 750),
+        ClanMember(username: 'LuckyGamer', role: 'member', level: 12, contribution: 340),
       ]),
-  ClanData(id: 'cosmos', name: 'Cosmos Empire', emblem: '⭐', description: 'Cacciatori di item cosmici',
+  const ClanData(id: 'cosmos', name: 'Cosmos Empire', emblem: '⭐', description: 'Cacciatori di item cosmici',
       level: 15, points: 87000, members: [
-        const ClanMember(username: 'CryptoKing', role: 'leader', level: 45, contribution: 3400),
-        const ClanMember(username: 'PixelHunter', role: 'officer', level: 38, contribution: 2100),
+        ClanMember(username: 'CryptoKing', role: 'leader', level: 45, contribution: 3400),
+        ClanMember(username: 'PixelHunter', role: 'officer', level: 38, contribution: 2100),
       ]),
 ];
 
@@ -462,7 +462,7 @@ class _CreateClanTabState extends State<_CreateClanTab> {
                     fontWeight: FontWeight.w900, fontSize: 15),
                 ),
                 const SizedBox(height: 4),
-                _ClanBadge('Lv.1', AppColors.neonGold),
+                const _ClanBadge('Lv.1', AppColors.neonGold),
               ])),
             ]),
           ),

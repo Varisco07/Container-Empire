@@ -1,5 +1,0 @@
-2026/06/07-18:34:15.604 10d4 Creating DB C:\Users\varis\AppData\Local\Temp\flutter_tools.2af4daa2\flutter_tools_chrome_device.85ac6d30\Default\IndexedDB\http_localhost_49476.indexeddb.leveldb since it was missing.
-2026/06/07-18:34:15.608 10d4 Reusing MANIFEST C:\Users\varis\AppData\Local\Temp\flutter_tools.2af4daa2\flutter_tools_chrome_device.85ac6d30\Default\IndexedDB\http_localhost_49476.indexeddb.leveldb/MANIFEST-000001
-2026/06/07-18:44:58.730 399c Level-0 table #5: started
-2026/06/07-18:44:58.746 399c Level-0 table #5: 849801 bytes OK
-2026/06/07-18:44:58.747 399c Delete type=0 #3

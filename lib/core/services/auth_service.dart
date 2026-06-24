@@ -15,6 +15,8 @@ enum AuthResult {
   error,
 }
 
+enum AccountDeletionResult { success, requiresRecentLogin, error }
+
 class AuthService {
   static const _authStateBox  = 'auth_state';
   static const _currentUidKey = 'current_uid';
@@ -235,6 +237,36 @@ class AuthService {
     await _firebaseAuth.signOut();
     await _authState.delete(_currentUidKey);
     await _authState.delete(_usernameKey);
+  }
+
+  // ─── Eliminazione account (GDPR / requisito store) ──────────────────────────
+
+  /// Cancella i dati cloud, l'utente di autenticazione e lo stato locale.
+  /// Ritorna [AccountDeletionResult.requiresRecentLogin] se Firebase richiede un
+  /// login recente: in quel caso i dati cloud sono già stati rimossi, basta
+  /// rifare login e riprovare per eliminare anche l'account di autenticazione.
+  Future<AccountDeletionResult> deleteAccount() async {
+    final user = _firebaseAuth.currentUser;
+    final uid = currentUid;
+    final username = currentUsername;
+    try {
+      if (uid != null) {
+        await _db.deleteAllUserData(uid, username: username);
+      }
+      if (user != null) {
+        await user.delete();
+      }
+      await _authState.delete(_currentUidKey);
+      await _authState.delete(_usernameKey);
+      return AccountDeletionResult.success;
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        return AccountDeletionResult.requiresRecentLogin;
+      }
+      return AccountDeletionResult.error;
+    } catch (_) {
+      return AccountDeletionResult.error;
+    }
   }
 
   // ─── Reset Password ───────────────────────────────────────────────────────

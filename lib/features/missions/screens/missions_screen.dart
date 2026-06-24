@@ -37,19 +37,19 @@ class _MissionDef {
 
 final _missionDefs = <_MissionDef>[
   // Daily — rewards calibrati su costo basic container (100€)
-  _MissionDef(
+  const _MissionDef(
     id: 'daily_open_5', title: 'Apri 5 Container',
     description: 'Apri qualsiasi container 5 volte oggi',
     emoji: '📦', type: MissionType.daily, target: 5, color: AppColors.neonCyan,
     coinsReward: 150, gemsReward: 1,
   ),
-  _MissionDef(
+  const _MissionDef(
     id: 'daily_sell_10', title: 'Vendi 10 Oggetti',
     description: 'Vendi 10 oggetti dall\'inventario oggi',
     emoji: '💰', type: MissionType.daily, target: 10, color: AppColors.coins,
     coinsReward: 300, gemsReward: 1,
   ),
-  _MissionDef(
+  const _MissionDef(
     id: 'daily_rares_1', title: 'Trova 1 Raro',
     description: 'Ottieni almeno 1 oggetto Raro o superiore oggi',
     emoji: '⭐', type: MissionType.daily, target: 1, color: AppColors.rare,
@@ -57,19 +57,19 @@ final _missionDefs = <_MissionDef>[
   ),
 
   // Weekly
-  _MissionDef(
+  const _MissionDef(
     id: 'weekly_open_50', title: 'Collezionista',
     description: 'Apri 50 container questa settimana',
     emoji: '🗃️', type: MissionType.weekly, target: 50, color: AppColors.neonPurple,
     coinsReward: 2000, gemsReward: 5,
   ),
-  _MissionDef(
+  const _MissionDef(
     id: 'weekly_sell_100', title: 'Grande Mercante',
     description: 'Vendi 100 oggetti questa settimana',
     emoji: '💸', type: MissionType.weekly, target: 100, color: AppColors.neonOrange,
     coinsReward: 3500, gemsReward: 8,
   ),
-  _MissionDef(
+  const _MissionDef(
     id: 'weekly_rare_5', title: 'Cacciatore di Rari',
     description: 'Trova 5 oggetti Raro o superiore questa settimana',
     emoji: '🏆', type: MissionType.weekly, target: 5, color: AppColors.rare,
@@ -77,31 +77,31 @@ final _missionDefs = <_MissionDef>[
   ),
 
   // Permanent — one-time, rewards proporzionali all'effort
-  _MissionDef(
+  const _MissionDef(
     id: 'perm_open_100', title: 'Centurione',
     description: 'Apri 100 container in totale',
     emoji: '🎖️', type: MissionType.permanent, target: 100, color: AppColors.neonGold,
     coinsReward: 8000, gemsReward: 15,
   ),
-  _MissionDef(
+  const _MissionDef(
     id: 'perm_level_10', title: 'Esperto',
     description: 'Raggiungi il livello 10',
     emoji: '🎯', type: MissionType.permanent, target: 10, color: AppColors.epic,
     coinsReward: 5000, gemsReward: 10,
   ),
-  _MissionDef(
+  const _MissionDef(
     id: 'perm_earn_100k', title: 'Centomilionario',
     description: 'Guadagna 🪙 100.000 in totale',
     emoji: '💎', type: MissionType.permanent, target: 100000, color: AppColors.legendary,
     coinsReward: 10000, gemsReward: 20,
   ),
-  _MissionDef(
+  const _MissionDef(
     id: 'perm_rare_10', title: 'Fortunato',
     description: 'Trova 10 oggetti Raro o superiori in totale',
     emoji: '🌟', type: MissionType.permanent, target: 10, color: AppColors.mythic,
     coinsReward: 12000, gemsReward: 25,
   ),
-  _MissionDef(
+  const _MissionDef(
     id: 'perm_level_25', title: 'Veterano',
     description: 'Raggiungi il livello 25',
     emoji: '🔱', type: MissionType.permanent, target: 25, color: AppColors.divine,
